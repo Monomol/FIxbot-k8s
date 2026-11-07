@@ -1,0 +1,162 @@
+{{- if .Values.site.enabled }}
+{{- $courseList := list }}
+{{- $allCourseList := list }}
+{{- range $slug, $course := .Values.courses }}
+{{- $entry := dict "slug" $slug "url" (printf "https://%s.%s" $slug $.Values.domain) "name" (default $slug $course.name) }}
+{{- if $course.siteCard }}
+{{- $entry = merge $entry (dict "card" $course.siteCard) }}
+{{- end }}
+{{- if or (not (hasKey $course "listed")) $course.listed }}
+{{- $courseList = append $courseList $entry }}
+{{- end }}
+{{- $allCourseList = append $allCourseList $entry }}
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fixbot.fullname" $ }}-site
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+spec:
+  replicas: {{ .Values.site.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: fixbot
+      fixbot.example.com/component: site
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: fixbot
+        fixbot.example.com/component: site
+      annotations:
+        # The server reads COURSES_JSON/ALL_COURSES_JSON at pod start. Helm
+        # updates the env on every upgrade but K8s never restarts a pod for
+        # that, so without this the running server keeps a removed Course
+        # forever (shown "down" once its Service is gone). Hash the Course set
+        # so any add/remove rolls the Deployment and the stale entry disappears.
+        checksum/courses: {{ $.Values.courses | toJson | sha256sum }}
+        # Roll on every upgrade too: the site image is `:latest` (pullPolicy
+        # Always), so a restart is what re-pulls freshly published site content.
+        checksum/revision: {{ .Release.Revision | quote }}
+        # Export the SLO/backup metrics for Prometheus (scrape /metrics).
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: {{ include "fixbot.fullname" $ }}-site-sa
+      {{- with .Values.site.imagePullSecretName }}
+      imagePullSecrets:
+        - name: {{ . }}
+      {{- end }}
+      # PodSecurity "restricted" requirements (Kubernetes Pod Security Standards)
+      securityContext:
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: site
+          image: "{{ .Values.site.image.repository }}:{{ .Values.site.image.tag }}"
+          imagePullPolicy: {{ .Values.site.image.pullPolicy }}
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: RELEASE
+              value: {{ .Release.Name | quote }}
+            - name: NAMESPACE
+              value: {{ $.Values.namespace | quote }}
+            # The Course set advertised on the public site (and, for /metrics,
+            # every Course incl. unlisted ones) is chart-owned and injected at
+            # pod start; the image itself is course-agnostic.
+            - name: COURSES_JSON
+              value: {{ $courseList | toJson | quote }}
+            - name: ALL_COURSES_JSON
+              value: {{ $allCourseList | toJson | quote }}
+          resources:
+            {{- toYaml .Values.site.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "fixbot.fullname" $ }}-site-svc
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app.kubernetes.io/part-of: fixbot
+    fixbot.example.com/component: site
+---
+# Namespace-scoped permissions for the public site's /metrics exporter: it
+# reads the CNPG Cluster CRs (S3 backup/WAL state) and the webui pod list to
+# publish SLO + backup-health metrics for Prometheus (no cluster-wide rights).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "fixbot.fullname" $ }}-site-sa
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "fixbot.fullname" $ }}-site-role
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["postgresql.cnpg.io"]
+    resources: ["clusters"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["barmancloud.cnpg.io"]
+    resources: ["objectstores"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "fixbot.fullname" $ }}-site-rb
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "fixbot.fullname" $ }}-site-role
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "fixbot.fullname" $ }}-site-sa
+    namespace: {{ $.Values.namespace }}
+{{- end }}

@@ -1,0 +1,26 @@
+# OS files
+
+# IDEs and Editors
+
+# LLM / local tooling
+.gem/
+.opencode/
+.sandopencode/
+export/
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+
+# Local Kubernetes configuration
+*.kubeconfig
+kubeconfig
+kube-cluster.yaml
+
+# Secrets and local overrides
+.env
+values.local.yaml
+values.secrets.yaml

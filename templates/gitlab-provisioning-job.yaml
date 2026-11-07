@@ -1,0 +1,86 @@
+{{- if .Values.gitlabProvisioning.enabled }}
+{{- $fullname := include "fixbot.fullname" . }}
+{{- $gp := .Values.gitlabProvisioning }}
+{{- $courses := list }}
+{{- range $slug, $course := .Values.courses }}
+{{- $config := (include "fixbot.courseConfig" (dict "root" $ "slug" $slug "course" $course)) | fromYaml }}
+{{- $courses = append $courses (dict "slug" $slug "repo" $config.qkb.repo) }}
+{{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $fullname }}-gitlab-provision-config
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+data:
+  gitlab_provision.py: |
+{{ $.Files.Get "scripts/gitlab_provision.py" | indent 4 }}
+---
+# Re-runs on every helm upgrade: ensures the fixbot/qkb subgroup + one QKB
+# repo per Course (<slug>-<year>, seeded with the Pipe-type skeleton + CI)
+# exist on gitlab.example.com. Idempotent; NEVER deletes (old-year repos must
+# survive Course/year turnover).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $fullname }}-gitlab-provision
+  namespace: {{ $.Values.namespace }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    fixbot.example.com/component: gitlab-provision
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: fixbot
+        fixbot.example.com/component: gitlab-provision
+    spec:
+      # PodSecurity "restricted" requirements
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      restartPolicy: OnFailure
+      containers:
+        - name: gitlab-provision
+          image: "{{ $gp.image.repository }}:{{ $gp.image.tag }}"
+          imagePullPolicy: {{ $gp.image.pullPolicy }}
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          command: ["python", "/scripts/gitlab_provision.py"]
+          env:
+            - name: GITLAB_URL
+              value: {{ $gp.gitlabUrl | quote }}
+            - name: GROUP_PATH
+              value: {{ $gp.groupPath | quote }}
+            - name: QKB_SUBGROUP
+              value: {{ $gp.qkbSubgroup | quote }}
+            - name: COURSES_JSON
+              value: {{ $courses | toJson | quote }}
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $gp.tokenSecretName }}
+                  key: {{ $gp.tokenSecretKey }}
+          volumeMounts:
+            - name: script
+              mountPath: /scripts
+              readOnly: true
+          resources:
+            {{- toYaml $gp.resources | nindent 12 }}
+      volumes:
+        - name: script
+          configMap:
+            name: {{ $fullname }}-gitlab-provision-config
+{{- end }}

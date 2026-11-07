@@ -1,0 +1,61 @@
+{{- range $slug, $course := .Values.courses }}
+{{- $config := (include "fixbot.courseConfig" (dict "root" $ "slug" $slug "course" $course)) | fromYaml }}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}-db
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  instances: {{ $config.postgres.instances }}
+
+  # Guarantee (or best-effort) DB instances never share a node. `required`
+  # only makes sense when instances > 1 (set per-Course for HA Courses).
+  affinity:
+    podAntiAffinityType: {{ $config.postgres.podAntiAffinityType }}
+
+  imageName: {{ $.Values.postgres.imageName | quote }}
+
+  primaryUpdateStrategy: unsupervised
+
+  postgresql:
+    parameters:
+      max_connections: {{ $config.postgres.maxConnections | quote }}
+
+  # Enable the CNPG postgres_exporter sidecar so Prometheus can collect
+  # pg_stat_* metrics (connections, cache hit, WAL archiving, ...). Exposed on
+  # port 9187 on the -rw/-ro/-r services (scraped by monitoring-prometheus).
+  metrics:
+    disableDefaultQueries: false
+
+  bootstrap:
+    initdb:
+      database: fixbot
+      owner: fixbot
+
+  storage:
+    size: {{ $config.postgres.storageSize | quote }}
+    storageClass: {{ $config.postgres.storageClass | quote }}
+
+  resources:
+    requests:
+      memory: {{ $config.postgres.resources.requests.memory | quote }}
+      cpu: {{ $config.postgres.resources.requests.cpu }}
+    limits:
+      memory: {{ $config.postgres.resources.limits.memory | quote }}
+      cpu: {{ $config.postgres.resources.limits.cpu }}
+
+  {{- if and $config.backup $config.backup.enabled }}
+  # Backups use the Barman Cloud Plugin (barman-cloud.cloudnative-pg.io). The
+  # ObjectStore configuration lives in the per-Course ObjectStore CR; here we
+  # only enable WAL archiving via the plugin and point it at that store.
+  plugins:
+    - name: {{ $.Values.backup.pluginName }}
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: {{ include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}-backup-store
+  {{- end }}
+{{- end }}

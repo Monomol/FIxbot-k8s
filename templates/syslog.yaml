@@ -1,0 +1,43 @@
+{{- if .Values.logging.enabled }}
+{{- with .Values.logging }}
+---
+apiVersion: logging.banzaicloud.io/v1beta1
+kind: SyslogNGOutput
+metadata:
+  name: {{ include "fixbot.fullname" $ }}-syslog-output
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+spec:
+  loggingRef: {{ .loggingRef | quote }}
+  syslog:
+    host: {{ .syslog.host | quote }}
+    port: {{ .syslog.port }}
+    # UDP datagrams (not TCP persistent connections) — matches promtail's
+    # syslog listener cleanly. TCP from SyslogNG uses RFC6587 octet-counting
+    # framing that promtail's go-syslog can't parse (spams "error initializing
+    # syslog stream ... i/o timeout" and no logs reach Loki).
+    transport: udp
+---
+apiVersion: logging.banzaicloud.io/v1beta1
+kind: SyslogNGFlow
+metadata:
+  name: {{ include "fixbot.fullname" $ }}-syslog-flow
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+spec:
+  loggingRef: {{ $.Values.logging.loggingRef | quote }}
+  match:
+    regexp:
+      # Match on namespace (single, unambiguous JSON field) rather than the
+      # dotted/slashed pod label `app.kubernetes.io/part-of`, whose dot+slash
+      # path does not reliably resolve in SyslogNG's JSON parser (it would
+      # select no logs). All fixbot resources live in the release namespace.
+      value: json.kubernetes.namespace_name
+      pattern: {{ $.Values.namespace | quote }}
+      type: glob
+  localOutputRefs:
+    - {{ include "fixbot.fullname" $ }}-syslog-output
+{{- end }}
+{{- end }}

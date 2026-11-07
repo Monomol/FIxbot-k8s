@@ -1,0 +1,1308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="594mm" height="420mm"
+     viewBox="0 0 2245 1587">
+  <rect x="0" y="0" width="2245" height="1587" fill="#FCFCFD"/>
+
+  <text x="60" y="112" font-family="Noto Sans" font-size="64"
+        font-weight="700" fill="#1F2933">FIxbot</text>
+  <text x="60" y="152" font-family="Noto Sans" font-size="27"
+        fill="#4A5560">Infrastructure at a glance — a per-Course AI study assistant on Kubernetes</text>
+  <line x1="60" y1="168" x2="2185" y2="168"
+        stroke="#D8DEE6" stroke-width="2"/>
+
+  <g id="panel-A">
+    <rect x="144.9" y="175.0" width="1955.3" height="790.0" rx="10"
+          fill="#FFFFFF" stroke="#D8DEE6" stroke-width="1.5"/>
+    <circle cx="162.9" cy="193.0" r="9" fill="#1F2933"/>
+    <text x="162.9" y="197.0" text-anchor="middle"
+          font-family="Noto Sans" font-size="10" font-weight="700" fill="#FFFFFF">A</text>
+    <svg x="144.9" y="175.0" width="1955.3" height="790.0"
+         viewBox="0.00 0.00 2071.40 836.92" preserveAspectRatio="xMidYMid meet">
+
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(25.2 811.72)">
+<title>system_overview</title>
+<polygon fill="#ffffff" stroke="none" points="-25.2,25.2 -25.2,-811.72 2046.2,-811.72 2046.2,25.2 -25.2,25.2"/>
+<text text-anchor="middle" x="1010.5" y="-761.62" font-family="Noto Sans" font-size="22.00" fill="#1f2933">System overview</text>
+<text text-anchor="middle" x="1010.5" y="-730.87" font-family="Noto Sans" font-size="22.00" fill="#1f2933">(one namespace, many Courses)</text>
+<g id="clust1" class="cluster">
+<title>cluster_actors</title>
+<path fill="#ffffff" stroke="#bbbbbb" stroke-dasharray="5,2" d="M20,-592.01C20,-592.01 308,-592.01 308,-592.01 314,-592.01 320,-598.01 320,-604.01 320,-604.01 320,-689.51 320,-689.51 320,-695.51 314,-701.51 308,-701.51 308,-701.51 20,-701.51 20,-701.51 14,-701.51 8,-695.51 8,-689.51 8,-689.51 8,-604.01 8,-604.01 8,-598.01 14,-592.01 20,-592.01"/>
+<text text-anchor="middle" x="164" y="-685.16" font-family="Noto Sans" font-size="13.00" fill="#555555">Users</text>
+</g>
+<g id="clust2" class="cluster">
+<title>cluster_shared</title>
+<path fill="#ffffff" stroke="#4a78b5" d="M1597,-8C1597,-8 2001,-8 2001,-8 2007,-8 2013,-14 2013,-20 2013,-20 2013,-697.02 2013,-697.02 2013,-703.02 2007,-709.02 2001,-709.02 2001,-709.02 1597,-709.02 1597,-709.02 1591,-709.02 1585,-703.02 1585,-697.02 1585,-697.02 1585,-20 1585,-20 1585,-14 1591,-8 1597,-8"/>
+<text text-anchor="middle" x="1799" y="-692.67" font-family="Noto Sans" font-size="13.00" fill="#4a78b5">Shared namespace services (fixbot)</text>
+</g>
+<g id="clust3" class="cluster">
+<title>cluster_course</title>
+<path fill="#ffffff" stroke="#3e8e5a" d="M1019,-121.9C1019,-121.9 1560,-121.9 1560,-121.9 1566,-121.9 1572,-127.9 1572,-133.9 1572,-133.9 1572,-383.73 1572,-383.73 1572,-389.73 1566,-395.73 1560,-395.73 1560,-395.73 1019,-395.73 1019,-395.73 1013,-395.73 1007,-389.73 1007,-383.73 1007,-383.73 1007,-133.9 1007,-133.9 1007,-127.9 1013,-121.9 1019,-121.9"/>
+<text text-anchor="middle" x="1289.5" y="-379.38" font-family="Noto Sans" font-size="13.00" fill="#3e8e5a">Per&#45;Course stack &#160;(one Course = one subdomain)</text>
+</g>
+<g id="clust4" class="cluster">
+<title>cluster_monitoring</title>
+<path fill="#ffffff" stroke="#4a78b5" d="M706,-265.34C706,-265.34 987,-265.34 987,-265.34 993,-265.34 999,-271.34 999,-277.34 999,-277.34 999,-691.51 999,-691.51 999,-697.51 993,-703.51 987,-703.51 987,-703.51 706,-703.51 706,-703.51 700,-703.51 694,-697.51 694,-691.51 694,-691.51 694,-277.34 694,-277.34 694,-271.34 700,-265.34 706,-265.34"/>
+<text text-anchor="middle" x="846.5" y="-687.16" font-family="Noto Sans" font-size="13.00" fill="#4a78b5">Self&#45;hosted observability</text>
+</g>
+<g id="clust5" class="cluster">
+<title>cluster_external</title>
+<path fill="#ffffff" stroke="#b5485d" d="M252,-10C252,-10 570,-10 570,-10 576,-10 582,-16 582,-22 582,-22 582,-545.75 582,-545.75 582,-551.75 576,-557.75 570,-557.75 570,-557.75 252,-557.75 252,-557.75 246,-557.75 240,-551.75 240,-545.75 240,-545.75 240,-22 240,-22 240,-16 246,-10 252,-10"/>
+<text text-anchor="middle" x="411" y="-541.4" font-family="Noto Sans" font-size="13.00" fill="#b5485d">External systems and external services</text>
+</g>
+<!-- student -->
+<g id="node1" class="node">
+<title>student</title>
+<path fill="#f2f2f2" stroke="#777777" stroke-width="1.4" d="M65.95,-638.01C65.95,-638.01 30.05,-638.01 30.05,-638.01 24.05,-638.01 18.04,-632.01 18.04,-626.01 18.04,-626.01 18.04,-614.01 18.04,-614.01 18.04,-608.01 24.04,-602.01 30.04,-602.01 30.04,-602.01 65.95,-602.01 65.95,-602.01 71.95,-602.01 77.95,-608.01 77.95,-614.01 77.95,-614.01 77.95,-626.01 77.95,-626.01 77.95,-632.01 71.95,-638.01 65.95,-638.01"/>
+<text text-anchor="middle" x="48" y="-617.44" font-family="Noto Sans" font-size="11.00">Student</text>
+</g>
+<!-- dns -->
+<g id="node4" class="node">
+<title>dns</title>
+<path fill="#fff4e5" stroke="#e8a33d" stroke-width="1.4" d="M208.2,-492.25C208.2,-492.25 71.8,-492.25 71.8,-492.25 65.8,-492.25 59.8,-486.25 59.8,-480.25 59.8,-480.25 59.8,-461.23 59.8,-461.23 59.8,-455.23 65.8,-449.23 71.8,-449.23 71.8,-449.23 208.2,-449.23 208.2,-449.23 214.2,-449.23 220.2,-455.23 220.2,-461.23 220.2,-461.23 220.2,-480.25 220.2,-480.25 220.2,-486.25 214.2,-492.25 208.2,-492.25"/>
+<text text-anchor="middle" x="140" y="-476.04" font-family="Noto Sans" font-size="11.00">DNS &#160;*.fixbot.example.com</text>
+<text text-anchor="middle" x="140" y="-460.29" font-family="Noto Sans" font-size="11.00">TLS via cert&#45;manager</text>
+</g>
+<!-- student&#45;&gt;dns -->
+<g id="edge1" class="edge">
+<title>student&#45;&gt;dns</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M58.91,-601.54C74.62,-576.39 103.77,-529.73 122.51,-499.74"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="124.36,-501.41 125.99,-494.17 120.2,-498.81 124.36,-501.41"/>
+<text text-anchor="middle" x="94.26" y="-569.95" font-family="Noto Sans" font-size="9.00" fill="#5b6770">HTTPS</text>
+</g>
+<!-- teacher -->
+<g id="node2" class="node">
+<title>teacher</title>
+<path fill="#f2f2f2" stroke="#777777" stroke-width="1.4" d="M157.96,-638.01C157.96,-638.01 122.05,-638.01 122.05,-638.01 116.05,-638.01 110.05,-632.01 110.05,-626.01 110.05,-626.01 110.05,-614.01 110.05,-614.01 110.05,-608.01 116.05,-602.01 122.05,-602.01 122.05,-602.01 157.96,-602.01 157.96,-602.01 163.96,-602.01 169.96,-608.01 169.96,-614.01 169.96,-614.01 169.96,-626.01 169.96,-626.01 169.96,-632.01 163.96,-638.01 157.96,-638.01"/>
+<text text-anchor="middle" x="140" y="-617.44" font-family="Noto Sans" font-size="11.00">Teacher</text>
+</g>
+<!-- teacher&#45;&gt;dns -->
+<g id="edge2" class="edge">
+<title>teacher&#45;&gt;dns</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M140,-601.54C140,-576.82 140,-531.31 140,-501.28"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="142.45,-501.47 140,-494.47 137.55,-501.47 142.45,-501.47"/>
+<text text-anchor="middle" x="174.12" y="-569.95" font-family="Noto Sans" font-size="9.00" fill="#5b6770">HTTPS / git push</text>
+</g>
+<!-- admin -->
+<g id="node3" class="node">
+<title>admin</title>
+<path fill="#f2f2f2" stroke="#777777" stroke-width="1.4" d="M298.33,-638.01C298.33,-638.01 213.67,-638.01 213.67,-638.01 207.67,-638.01 201.67,-632.01 201.67,-626.01 201.67,-626.01 201.67,-614.01 201.67,-614.01 201.67,-608.01 207.67,-602.01 213.67,-602.01 213.67,-602.01 298.33,-602.01 298.33,-602.01 304.33,-602.01 310.33,-608.01 310.33,-614.01 310.33,-614.01 310.33,-626.01 310.33,-626.01 310.33,-632.01 304.33,-638.01 298.33,-638.01"/>
+<text text-anchor="middle" x="256" y="-617.44" font-family="Noto Sans" font-size="11.00">Admin / operator</text>
+</g>
+<!-- admin&#45;&gt;dns -->
+<g id="edge3" class="edge">
+<title>admin&#45;&gt;dns</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M242.24,-601.54C222.35,-576.29 185.37,-529.34 161.76,-499.36"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="163.83,-498.03 157.57,-494.05 159.98,-501.06 163.83,-498.03"/>
+<text text-anchor="middle" x="235.6" y="-569.95" font-family="Noto Sans" font-size="9.00" fill="#5b6770">HTTPS</text>
+</g>
+<!-- ingress -->
+<g id="node5" class="node">
+<title>ingress</title>
+<path fill="#fff4e5" stroke="#e8a33d" stroke-width="1.4" d="M1243.2,-492.25C1243.2,-492.25 1148.8,-492.25 1148.8,-492.25 1142.8,-492.25 1136.8,-486.25 1136.8,-480.25 1136.8,-480.25 1136.8,-461.23 1136.8,-461.23 1136.8,-455.23 1142.8,-449.23 1148.8,-449.23 1148.8,-449.23 1243.2,-449.23 1243.2,-449.23 1249.2,-449.23 1255.2,-455.23 1255.2,-461.23 1255.2,-461.23 1255.2,-480.25 1255.2,-480.25 1255.2,-486.25 1249.2,-492.25 1243.2,-492.25"/>
+<text text-anchor="middle" x="1196" y="-476.04" font-family="Noto Sans" font-size="11.00">nginx Ingress</text>
+<text text-anchor="middle" x="1196" y="-460.29" font-family="Noto Sans" font-size="11.00">host&#45;based routing</text>
+</g>
+<!-- dns&#45;&gt;ingress -->
+<g id="edge4" class="edge">
+<title>dns&#45;&gt;ingress</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M156.99,-492.52C173.68,-511.97 201.08,-539.13 232,-550.69 312.66,-580.84 922.61,-567.8 1007,-550.69 1057.85,-540.37 1112.02,-515.92 1149.26,-496.75"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1150.13,-499.07 1155.2,-493.66 1147.86,-494.72 1150.13,-499.07"/>
+<text text-anchor="middle" x="482" y="-569.95" font-family="Noto Sans" font-size="9.00" fill="#5b6770">host</text>
+</g>
+<!-- site -->
+<g id="node6" class="node">
+<title>site</title>
+<path fill="#eaf2fb" stroke="#4a78b5" stroke-width="1.4" d="M1986.83,-320.36C1986.83,-320.36 1833.17,-320.36 1833.17,-320.36 1827.17,-320.36 1821.17,-314.36 1821.17,-308.36 1821.17,-308.36 1821.17,-289.34 1821.17,-289.34 1821.17,-283.34 1827.17,-277.34 1833.17,-277.34 1833.17,-277.34 1986.83,-277.34 1986.83,-277.34 1992.83,-277.34 1998.83,-283.34 1998.83,-289.34 1998.83,-289.34 1998.83,-308.36 1998.83,-308.36 1998.83,-314.36 1992.83,-320.36 1986.83,-320.36"/>
+<text text-anchor="middle" x="1910" y="-304.15" font-family="Noto Sans" font-size="11.00">Public site</text>
+<text text-anchor="middle" x="1910" y="-288.4" font-family="Noto Sans" font-size="11.00">Home / About / Status / Report</text>
+</g>
+<!-- ingress&#45;&gt;site -->
+<g id="edge5" class="edge">
+<title>ingress&#45;&gt;site</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M1255.29,-462.4C1292.03,-458.06 1340.2,-452.75 1383,-449.23 1463.96,-442.58 1669.36,-449.59 1748,-429.23 1781,-420.69 1789.38,-415.71 1817,-395.73 1844.18,-376.07 1870.33,-348.01 1887.95,-327.33"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1889.69,-329.06 1892.32,-322.12 1885.94,-325.91 1889.69,-329.06"/>
+<text text-anchor="middle" x="1845.92" y="-414.31" font-family="Noto Sans" font-size="9.00" fill="#5b6770">fixbot.example.com</text>
+</g>
+<!-- pipecontrol -->
+<g id="node7" class="node">
+<title>pipecontrol</title>
+<path fill="#eaf2fb" stroke="#4a78b5" stroke-width="1.4" d="M1776.83,-328.23C1776.83,-328.23 1611.17,-328.23 1611.17,-328.23 1605.17,-328.23 1599.17,-322.23 1599.17,-316.23 1599.17,-316.23 1599.17,-281.46 1599.17,-281.46 1599.17,-275.46 1605.17,-269.46 1611.17,-269.46 1611.17,-269.46 1776.83,-269.46 1776.83,-269.46 1782.83,-269.46 1788.83,-275.46 1788.83,-281.46 1788.83,-281.46 1788.83,-316.23 1788.83,-316.23 1788.83,-322.23 1782.83,-328.23 1776.83,-328.23"/>
+<text text-anchor="middle" x="1694" y="-312.02" font-family="Noto Sans" font-size="11.00">Pipe Control</text>
+<text text-anchor="middle" x="1694" y="-296.27" font-family="Noto Sans" font-size="11.00">/sync &#160;/repos &#160;/targets &#160;/health</text>
+<text text-anchor="middle" x="1694" y="-280.52" font-family="Noto Sans" font-size="11.00">/qkb&#45;assets on every Course host</text>
+</g>
+<!-- ingress&#45;&gt;pipecontrol -->
+<g id="edge7" class="edge">
+<title>ingress&#45;&gt;pipecontrol</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M1255.32,-462.67C1292.06,-458.44 1340.23,-453.13 1383,-449.23 1413.51,-446.45 1634.29,-448.64 1658,-429.23 1684.81,-407.28 1692.63,-367.21 1694.46,-337.45"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1696.91,-337.65 1694.77,-330.55 1692.01,-337.43 1696.91,-337.65"/>
+<text text-anchor="middle" x="1704.1" y="-414.31" font-family="Noto Sans" font-size="9.00" fill="#5b6770">pipe&#45;control.</text>
+</g>
+<!-- ingress&#45;&gt;pipecontrol -->
+<g id="edge8" class="edge">
+<title>ingress&#45;&gt;pipecontrol</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M1136.51,-463.71C1069.19,-456.28 967.34,-442.94 955.75,-429.23 948.43,-420.58 947.79,-411.8 955.75,-403.73 968.23,-391.1 1578.58,-402.5 1595,-395.73 1624.94,-383.39 1650.9,-357.29 1668.71,-335.44"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1670.55,-337.06 1672.98,-330.06 1666.71,-334.02 1670.55,-337.06"/>
+<text text-anchor="middle" x="983.88" y="-414.31" font-family="Noto Sans" font-size="9.00" fill="#5b6770">/qkb&#45;assets/*</text>
+</g>
+<!-- webui -->
+<g id="node12" class="node">
+<title>webui</title>
+<path fill="#e8f5ec" stroke="#3e8e5a" stroke-width="1.4" d="M1193.58,-328.23C1193.58,-328.23 1062.42,-328.23 1062.42,-328.23 1056.42,-328.23 1050.42,-322.23 1050.42,-316.23 1050.42,-316.23 1050.42,-281.46 1050.42,-281.46 1050.42,-275.46 1056.42,-269.46 1062.42,-269.46 1062.42,-269.46 1193.58,-269.46 1193.58,-269.46 1199.58,-269.46 1205.58,-275.46 1205.58,-281.46 1205.58,-281.46 1205.58,-316.23 1205.58,-316.23 1205.58,-322.23 1199.58,-328.23 1193.58,-328.23"/>
+<text text-anchor="middle" x="1128" y="-312.02" font-family="Noto Sans" font-size="11.00">Open WebUI</text>
+<text text-anchor="middle" x="1128" y="-296.27" font-family="Noto Sans" font-size="11.00">Deployment or StatefulSet</text>
+<text text-anchor="middle" x="1128" y="-280.52" font-family="Noto Sans" font-size="11.00">(chats, Pipes, knowledge)</text>
+</g>
+<!-- ingress&#45;&gt;webui -->
+<g id="edge6" class="edge">
+<title>ingress&#45;&gt;webui</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M1255.68,-454.86C1268.04,-448.93 1279.56,-440.69 1287,-429.23 1293.17,-419.73 1292.39,-413.7 1287,-403.73 1270.15,-372.59 1239.45,-349.29 1209.49,-332.74"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1210.96,-330.75 1203.63,-329.6 1208.65,-335.07 1210.96,-330.75"/>
+<text text-anchor="middle" x="1347.22" y="-414.31" font-family="Noto Sans" font-size="9.00" fill="#5b6770">&lt;slug&gt;.fixbot.example.com</text>
+</g>
+<!-- grafana -->
+<g id="node19" class="node">
+<title>grafana</title>
+<path fill="#eaf2fb" stroke="#4a78b5" stroke-width="1.4" d="M827.71,-320.36C827.71,-320.36 718.29,-320.36 718.29,-320.36 712.29,-320.36 706.29,-314.36 706.29,-308.36 706.29,-308.36 706.29,-289.34 706.29,-289.34 706.29,-283.34 712.29,-277.34 718.29,-277.34 718.29,-277.34 827.71,-277.34 827.71,-277.34 833.71,-277.34 839.71,-283.34 839.71,-289.34 839.71,-289.34 839.71,-308.36 839.71,-308.36 839.71,-314.36 833.71,-320.36 827.71,-320.36"/>
+<text text-anchor="middle" x="773" y="-304.15" font-family="Noto Sans" font-size="11.00">Grafana</text>
+<text text-anchor="middle" x="773" y="-288.4" font-family="Noto Sans" font-size="11.00">monitoring.&lt;domain&gt;</text>
+</g>
+<!-- ingress&#45;&gt;grafana -->
+<g id="edge9" class="edge">
+<title>ingress&#45;&gt;grafana</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M1138.43,-448.84C1099.02,-434.35 1045.65,-414.38 999,-395.73 940.57,-372.37 874.37,-344.07 828.79,-324.29"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="830.02,-322.15 822.62,-321.6 828.06,-326.64 830.02,-322.15"/>
+<text text-anchor="middle" x="1109.16" y="-414.31" font-family="Noto Sans" font-size="9.00" fill="#5b6770">monitoring.</text>
+</g>
+<!-- prometheus -->
+<g id="node18" class="node">
+<title>prometheus</title>
+<path fill="#eaf2fb" stroke="#4a78b5" stroke-width="1.4" d="M974.58,-316.85C974.58,-316.85 915.42,-316.85 915.42,-316.85 909.42,-316.85 903.42,-310.85 903.42,-304.85 903.42,-304.85 903.42,-292.85 903.42,-292.85 903.42,-286.85 909.42,-280.85 915.42,-280.85 915.42,-280.85 974.58,-280.85 974.58,-280.85 980.58,-280.85 986.58,-286.85 986.58,-292.85 986.58,-292.85 986.58,-304.85 986.58,-304.85 986.58,-310.85 980.58,-316.85 974.58,-316.85"/>
+<text text-anchor="middle" x="945" y="-296.27" font-family="Noto Sans" font-size="11.00">Prometheus</text>
+</g>
+<!-- site&#45;&gt;prometheus -->
+<g id="edge32" class="edge">
+<title>site&#45;&gt;prometheus</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="1,5" d="M1896.34,-320.47C1880.47,-343.35 1851.93,-378.13 1817,-392.69 1775.05,-410.17 1038.34,-415.44 999,-392.69 974.29,-378.4 959.9,-348.05 952.27,-325.71"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="954.65,-325.1 950.19,-319.17 949.98,-326.59 954.65,-325.1"/>
+<text text-anchor="middle" x="1473" y="-414.31" font-family="Noto Sans" font-size="9.00" fill="#5b6770">fixbot_* metrics</text>
+</g>
+<!-- propagate -->
+<g id="node10" class="node">
+<title>propagate</title>
+<path fill="#ffffff" stroke="#4a78b5" stroke-width="1.4" stroke-dasharray="5,2" d="M1813.95,-197.82C1813.95,-197.82 1706.05,-197.82 1706.05,-197.82 1700.05,-197.82 1694.05,-191.82 1694.05,-185.82 1694.05,-185.82 1694.05,-166.8 1694.05,-166.8 1694.05,-160.8 1700.05,-154.8 1706.05,-154.8 1706.05,-154.8 1813.95,-154.8 1813.95,-154.8 1819.95,-154.8 1825.95,-160.8 1825.95,-166.8 1825.95,-166.8 1825.95,-185.82 1825.95,-185.82 1825.95,-191.82 1819.95,-197.82 1813.95,-197.82"/>
+<text text-anchor="middle" x="1760" y="-181.61" font-family="Noto Sans" font-size="11.00">propagate Job</text>
+<text text-anchor="middle" x="1760" y="-165.86" font-family="Noto Sans" font-size="11.00">clone at sha + publish</text>
+</g>
+<!-- pipecontrol&#45;&gt;propagate -->
+<g id="edge20" class="edge">
+<title>pipecontrol&#45;&gt;propagate</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M1709.81,-268.97C1720.29,-249.84 1733.97,-224.84 1744.41,-205.79"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1746.5,-207.06 1747.71,-199.74 1742.2,-204.71 1746.5,-207.06"/>
+<text text-anchor="middle" x="1748" y="-240.91" font-family="Noto Sans" font-size="9.00" fill="#5b6770">spawn Job</text>
+</g>
+<!-- contentpvc -->
+<g id="node8" class="node">
+<title>contentpvc</title>
+<path fill="#f3eafb" stroke="#7b4fa6" stroke-width="1.4" d="M1849.2,-75.78C1849.2,-78.74 1809.22,-81.15 1760,-81.15 1710.78,-81.15 1670.8,-78.74 1670.8,-75.78 1670.8,-75.78 1670.8,-27.38 1670.8,-27.38 1670.8,-24.41 1710.78,-22 1760,-22 1809.22,-22 1849.2,-24.41 1849.2,-27.38 1849.2,-27.38 1849.2,-75.78 1849.2,-75.78"/>
+<path fill="none" stroke="#7b4fa6" stroke-width="1.4" d="M1849.2,-75.78C1849.2,-72.81 1809.22,-70.4 1760,-70.4 1710.78,-70.4 1670.8,-72.81 1670.8,-75.78"/>
+<text text-anchor="middle" x="1760" y="-56.88" font-family="Noto Sans" font-size="11.00">Shared content PVC</text>
+<text text-anchor="middle" x="1760" y="-41.13" font-family="Noto Sans" font-size="11.00">sys&#45;prompts / pipe&#45;bases / qkb</text>
+</g>
+<!-- reconcile -->
+<g id="node9" class="node">
+<title>reconcile</title>
+<path fill="#ffffff" stroke="#4a78b5" stroke-width="1.4" stroke-dasharray="5,2" d="M1967.83,-492.25C1967.83,-492.25 1838.17,-492.25 1838.17,-492.25 1832.17,-492.25 1826.17,-486.25 1826.17,-480.25 1826.17,-480.25 1826.17,-461.23 1826.17,-461.23 1826.17,-455.23 1832.17,-449.23 1838.17,-449.23 1838.17,-449.23 1967.83,-449.23 1967.83,-449.23 1973.83,-449.23 1979.83,-455.23 1979.83,-461.23 1979.83,-461.23 1979.83,-480.25 1979.83,-480.25 1979.83,-486.25 1973.83,-492.25 1967.83,-492.25"/>
+<text text-anchor="middle" x="1903" y="-476.04" font-family="Noto Sans" font-size="11.00">content&#45;reconcile CronJob</text>
+<text text-anchor="middle" x="1903" y="-460.29" font-family="Noto Sans" font-size="11.00">every 5 min, deploy&#45;only</text>
+</g>
+<!-- reconcile&#45;&gt;pipecontrol -->
+<g id="edge22" class="edge">
+<title>reconcile&#45;&gt;pipecontrol</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="1,5" d="M1895.05,-448.88C1888.96,-434.9 1879.47,-416.73 1867,-403.73 1838.82,-374.36 1800.59,-350.25 1767.23,-332.68"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1768.4,-330.52 1761.05,-329.48 1766.14,-334.87 1768.4,-330.52"/>
+<text text-anchor="middle" x="1911.98" y="-420.68" font-family="Noto Sans" font-size="9.00" fill="#5b6770">POST /sync</text>
+<text text-anchor="middle" x="1911.98" y="-407.93" font-family="Noto Sans" font-size="9.00" fill="#5b6770">(deploy&#45;only)</text>
+</g>
+<!-- propagate&#45;&gt;contentpvc -->
+<g id="edge21" class="edge">
+<title>propagate&#45;&gt;contentpvc</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M1760,-154.49C1760,-136.89 1760,-111.25 1760,-90.09"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1762.45,-90.3 1760,-83.3 1757.55,-90.3 1762.45,-90.3"/>
+<text text-anchor="middle" x="1805.38" y="-105.35" font-family="Noto Sans" font-size="9.00" fill="#5b6770">publish at pushed sha</text>
+</g>
+<!-- propagate&#45;&gt;webui -->
+<g id="edge24" class="edge">
+<title>propagate&#45;&gt;webui</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M1721.27,-198.31C1705.79,-205.62 1687.5,-212.92 1670,-216.71 1629.49,-225.47 207.11,-207.21 178,-236.71 174.02,-240.74 174.03,-245.42 178,-249.46 194.9,-266.67 1022.36,-260.6 1046,-265.34 1048.17,-265.77 1050.35,-266.26 1052.54,-266.8"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1051.72,-269.11 1059.12,-268.57 1053,-264.38 1051.72,-269.11"/>
+<text text-anchor="middle" x="205" y="-240.91" font-family="Noto Sans" font-size="9.00" fill="#5b6770">model config</text>
+</g>
+<!-- statedb -->
+<g id="node16" class="node">
+<title>statedb</title>
+<path fill="#f3eafb" stroke="#7b4fa6" stroke-width="1.4" d="M1305.33,-209.36C1305.33,-213.42 1275.6,-216.71 1239,-216.71 1202.4,-216.71 1172.67,-213.42 1172.67,-209.36 1172.67,-209.36 1172.67,-143.25 1172.67,-143.25 1172.67,-139.2 1202.4,-135.9 1239,-135.9 1275.6,-135.9 1305.33,-139.2 1305.33,-143.25 1305.33,-143.25 1305.33,-209.36 1305.33,-209.36"/>
+<path fill="none" stroke="#7b4fa6" stroke-width="1.4" d="M1305.33,-209.36C1305.33,-205.31 1275.6,-202.02 1239,-202.02 1202.4,-202.02 1172.67,-205.31 1172.67,-209.36"/>
+<text text-anchor="middle" x="1239" y="-189.48" font-family="Noto Sans" font-size="11.00">Pipe State DB</text>
+<text text-anchor="middle" x="1239" y="-173.73" font-family="Noto Sans" font-size="11.00">CNPG Postgres</text>
+<text text-anchor="middle" x="1239" y="-157.98" font-family="Noto Sans" font-size="11.00">Pipe Sessions + valves</text>
+</g>
+<!-- propagate&#45;&gt;statedb -->
+<g id="edge23" class="edge">
+<title>propagate&#45;&gt;statedb</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M1718.93,-198.23C1703.93,-205.29 1686.58,-212.4 1670,-216.71 1554.31,-246.82 1371.58,-250.72 1337.75,-240.66 1322.85,-236.24 1308.11,-228.78 1294.73,-220.47"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1296.31,-218.57 1289.1,-216.84 1293.66,-222.69 1296.31,-218.57"/>
+<text text-anchor="middle" x="1367" y="-240.91" font-family="Noto Sans" font-size="9.00" fill="#5b6770">Pipes + valves</text>
+</g>
+<!-- provision -->
+<g id="node11" class="node">
+<title>provision</title>
+<path fill="#ffffff" stroke="#4a78b5" stroke-width="1.4" stroke-dasharray="5,2" d="M1869.08,-641.52C1869.08,-641.52 1728.92,-641.52 1728.92,-641.52 1722.92,-641.52 1716.92,-635.52 1716.92,-629.52 1716.92,-629.52 1716.92,-610.5 1716.92,-610.5 1716.92,-604.5 1722.92,-598.5 1728.92,-598.5 1728.92,-598.5 1869.08,-598.5 1869.08,-598.5 1875.08,-598.5 1881.08,-604.5 1881.08,-610.5 1881.08,-610.5 1881.08,-629.52 1881.08,-629.52 1881.08,-635.52 1875.08,-641.52 1869.08,-641.52"/>
+<text text-anchor="middle" x="1799" y="-625.31" font-family="Noto Sans" font-size="11.00">per&#45;Course provisioning Job</text>
+<text text-anchor="middle" x="1799" y="-609.56" font-family="Noto Sans" font-size="11.00">admins + OWUI settings</text>
+</g>
+<!-- provision&#45;&gt;webui -->
+<g id="edge18" class="edge">
+<title>provision&#45;&gt;webui</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="1,5" d="M1778.56,-598.24C1733.85,-554.2 1622.15,-451.6 1507,-403.73 1485.41,-394.76 1477.82,-400.81 1455,-395.73 1372.21,-377.31 1279.59,-349.45 1214.12,-328.5"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1215.15,-326.26 1207.74,-326.45 1213.66,-330.92 1215.15,-326.26"/>
+<text text-anchor="middle" x="1751.92" y="-468.57" font-family="Noto Sans" font-size="9.00" fill="#5b6770">reconcile</text>
+</g>
+<!-- webui&#45;&gt;contentpvc -->
+<g id="edge17" class="edge">
+<title>webui&#45;&gt;contentpvc</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M1206.06,-290.11C1342.62,-276.56 1610.58,-249.93 1611,-249.46 1614.8,-245.26 1612.35,-242.21 1611,-236.71 1597.27,-180.8 1600.1,-151.97 1551,-121.9 1531.74,-110.11 753.89,-129.95 738,-113.9 734.01,-109.88 734.09,-105.25 738,-101.15 769.56,-68.06 1411.68,-56.78 1661.64,-53.63"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1661.43,-56.08 1668.4,-53.54 1661.37,-51.18 1661.43,-56.08"/>
+<text text-anchor="middle" x="1637.73" y="-174.13" font-family="Noto Sans" font-size="9.00" fill="#5b6770">subPath mount</text>
+</g>
+<!-- redis -->
+<g id="node13" class="node">
+<title>redis</title>
+<path fill="#e8f5ec" stroke="#3e8e5a" stroke-width="1.4" stroke-dasharray="5,2" d="M1420.83,-320.36C1420.83,-320.36 1309.17,-320.36 1309.17,-320.36 1303.17,-320.36 1297.17,-314.36 1297.17,-308.36 1297.17,-308.36 1297.17,-289.34 1297.17,-289.34 1297.17,-283.34 1303.17,-277.34 1309.17,-277.34 1309.17,-277.34 1420.83,-277.34 1420.83,-277.34 1426.83,-277.34 1432.83,-283.34 1432.83,-289.34 1432.83,-289.34 1432.83,-308.36 1432.83,-308.36 1432.83,-314.36 1426.83,-320.36 1420.83,-320.36"/>
+<text text-anchor="middle" x="1365" y="-304.15" font-family="Noto Sans" font-size="11.00">Dragonfly / Redis</text>
+<text text-anchor="middle" x="1365" y="-288.4" font-family="Noto Sans" font-size="11.00">sessions + websockets</text>
+</g>
+<!-- webui&#45;&gt;redis -->
+<g id="edge13" class="edge">
+<title>webui&#45;&gt;redis</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M1205.93,-298.85C1232.36,-298.85 1261.84,-298.85 1288.18,-298.85"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1288.01,-301.3 1295.01,-298.85 1288.01,-296.4 1288.01,-301.3"/>
+<text text-anchor="middle" x="1251.38" y="-306.05" font-family="Noto Sans" font-size="9.00" fill="#5b6770">replicas &gt; 1</text>
+</g>
+<!-- chroma -->
+<g id="node14" class="node">
+<title>chroma</title>
+<path fill="#e8f5ec" stroke="#3e8e5a" stroke-width="1.4" stroke-dasharray="5,2" d="M1539.45,-320.36C1539.45,-320.36 1482.55,-320.36 1482.55,-320.36 1476.55,-320.36 1470.55,-314.36 1470.55,-308.36 1470.55,-308.36 1470.55,-289.34 1470.55,-289.34 1470.55,-283.34 1476.55,-277.34 1482.55,-277.34 1482.55,-277.34 1539.45,-277.34 1539.45,-277.34 1545.45,-277.34 1551.45,-283.34 1551.45,-289.34 1551.45,-289.34 1551.45,-308.36 1551.45,-308.36 1551.45,-314.36 1545.45,-320.36 1539.45,-320.36"/>
+<text text-anchor="middle" x="1511" y="-304.15" font-family="Noto Sans" font-size="11.00">Chroma</text>
+<text text-anchor="middle" x="1511" y="-288.4" font-family="Noto Sans" font-size="11.00">vector store</text>
+</g>
+<!-- webui&#45;&gt;chroma -->
+<g id="edge14" class="edge">
+<title>webui&#45;&gt;chroma</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M1167.07,-328.6C1233.43,-375.22 1370.37,-454.11 1467,-392.69 1488.76,-378.86 1499.94,-351.12 1505.57,-329.37"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1507.93,-330.06 1507.15,-322.69 1503.16,-328.94 1507.93,-330.06"/>
+<text text-anchor="middle" x="1262" y="-414.31" font-family="Noto Sans" font-size="9.00" fill="#5b6770">replicas &gt; 1</text>
+</g>
+<!-- owuidb -->
+<g id="node15" class="node">
+<title>owuidb</title>
+<path fill="#f3eafb" stroke="#7b4fa6" stroke-width="1.4" d="M1140.58,-209.36C1140.58,-213.42 1113.88,-216.71 1081,-216.71 1048.12,-216.71 1021.42,-213.42 1021.42,-209.36 1021.42,-209.36 1021.42,-143.25 1021.42,-143.25 1021.42,-139.2 1048.12,-135.9 1081,-135.9 1113.88,-135.9 1140.58,-139.2 1140.58,-143.25 1140.58,-143.25 1140.58,-209.36 1140.58,-209.36"/>
+<path fill="none" stroke="#7b4fa6" stroke-width="1.4" d="M1140.58,-209.36C1140.58,-205.31 1113.88,-202.02 1081,-202.02 1048.12,-202.02 1021.42,-205.31 1021.42,-209.36"/>
+<text text-anchor="middle" x="1081" y="-189.48" font-family="Noto Sans" font-size="11.00">Open WebUI DB</text>
+<text text-anchor="middle" x="1081" y="-173.73" font-family="Noto Sans" font-size="11.00">CNPG Postgres</text>
+<text text-anchor="middle" x="1081" y="-157.98" font-family="Noto Sans" font-size="11.00">users, chats, config</text>
+</g>
+<!-- webui&#45;&gt;owuidb -->
+<g id="edge10" class="edge">
+<title>webui&#45;&gt;owuidb</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M1206.05,-292.1C1295.01,-284.05 1424.77,-266.89 1397,-236.71 1360.76,-197.33 1208.42,-231.54 1157,-216.71 1154.29,-215.93 1151.56,-215.05 1148.83,-214.08"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1149.92,-211.87 1142.51,-211.66 1148.17,-216.45 1149.92,-211.87"/>
+<text text-anchor="middle" x="1409.06" y="-240.91" font-family="Noto Sans" font-size="9.00" fill="#5b6770">SQL</text>
+</g>
+<!-- webui&#45;&gt;statedb -->
+<g id="edge11" class="edge">
+<title>webui&#45;&gt;statedb</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M1206,-297.4C1291.29,-295.05 1420.01,-285.44 1451,-249.46 1454.7,-245.17 1454.42,-241.23 1451,-236.71 1442.39,-225.36 1371.9,-207.08 1314.53,-193.79"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1315.1,-191.41 1307.72,-192.23 1314,-196.19 1315.1,-191.41"/>
+<text text-anchor="middle" x="1461.92" y="-240.91" font-family="Noto Sans" font-size="9.00" fill="#5b6770">SQL</text>
+</g>
+<!-- cdata -->
+<g id="node17" class="node">
+<title>cdata</title>
+<path fill="#f3eafb" stroke="#7b4fa6" stroke-width="1.4" d="M1535.2,-200.51C1535.2,-203.47 1511.36,-205.88 1482,-205.88 1452.64,-205.88 1428.8,-203.47 1428.8,-200.51 1428.8,-200.51 1428.8,-152.11 1428.8,-152.11 1428.8,-149.14 1452.64,-146.73 1482,-146.73 1511.36,-146.73 1535.2,-149.14 1535.2,-152.11 1535.2,-152.11 1535.2,-200.51 1535.2,-200.51"/>
+<path fill="none" stroke="#7b4fa6" stroke-width="1.4" d="M1535.2,-200.51C1535.2,-197.54 1511.36,-195.13 1482,-195.13 1452.64,-195.13 1428.8,-197.54 1428.8,-200.51"/>
+<text text-anchor="middle" x="1482" y="-181.61" font-family="Noto Sans" font-size="11.00">Course data PVC</text>
+<text text-anchor="middle" x="1482" y="-165.86" font-family="Noto Sans" font-size="11.00">(uploads / cache)</text>
+</g>
+<!-- webui&#45;&gt;cdata -->
+<g id="edge12" class="edge">
+<title>webui&#45;&gt;cdata</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M1205.81,-290.49C1313.3,-279.95 1495.21,-260.59 1505,-249.46 1513.62,-239.66 1512.1,-226.62 1507,-214.31"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1509.29,-213.41 1504.06,-208.15 1504.87,-215.52 1509.29,-213.41"/>
+<text text-anchor="middle" x="1519.31" y="-240.91" font-family="Noto Sans" font-size="9.00" fill="#5b6770">files</text>
+</g>
+<!-- webui&#45;&gt;prometheus -->
+<g id="edge31" class="edge">
+<title>webui&#45;&gt;prometheus</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="1,5" d="M1050.09,-282.81C1034.89,-281.41 1019.07,-281.16 1004.25,-283.1 1001.4,-283.47 998.49,-283.94 995.57,-284.48"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="995.09,-282.08 988.73,-285.89 996.09,-286.87 995.09,-282.08"/>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="1,5" d="M1050.24,-298.85C1031.76,-298.85 1012.5,-298.85 995.6,-298.85"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="995.95,-296.4 988.95,-298.85 995.95,-301.3 995.95,-296.4"/>
+<text text-anchor="middle" x="1018.5" y="-287.3" font-family="Noto Sans" font-size="9.00" fill="#5b6770">scrape</text>
+</g>
+<!-- oidc -->
+<g id="node22" class="node">
+<title>oidc</title>
+<path fill="#fdecef" stroke="#b5485d" stroke-width="1.4" d="M558.46,-197.82C558.46,-197.82 447.55,-197.82 447.55,-197.82 441.55,-197.82 435.55,-191.82 435.55,-185.82 435.55,-185.82 435.55,-166.8 435.55,-166.8 435.55,-160.8 441.55,-154.8 447.55,-154.8 447.55,-154.8 558.46,-154.8 558.46,-154.8 564.46,-154.8 570.46,-160.8 570.46,-166.8 570.46,-166.8 570.46,-185.82 570.46,-185.82 570.46,-191.82 564.46,-197.82 558.46,-197.82"/>
+<text text-anchor="middle" x="503" y="-181.61" font-family="Noto Sans" font-size="11.00">id.example.com</text>
+<text text-anchor="middle" x="503" y="-165.86" font-family="Noto Sans" font-size="11.00">OIDC identity provider</text>
+</g>
+<!-- webui&#45;&gt;oidc -->
+<g id="edge15" class="edge">
+<title>webui&#45;&gt;oidc</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M1058.11,-268.98C1054.04,-267.66 1049.99,-266.44 1046,-265.34 883.02,-220.39 685.8,-195.51 579.62,-184.44"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="580.05,-182.02 572.84,-183.74 579.55,-186.9 580.05,-182.02"/>
+<text text-anchor="middle" x="982.15" y="-240.91" font-family="Noto Sans" font-size="9.00" fill="#5b6770">SSO</text>
+</g>
+<!-- aiass -->
+<g id="node23" class="node">
+<title>aiass</title>
+<path fill="#fdecef" stroke="#b5485d" stroke-width="1.4" d="M391.33,-197.82C391.33,-197.82 300.67,-197.82 300.67,-197.82 294.67,-197.82 288.67,-191.82 288.67,-185.82 288.67,-185.82 288.67,-166.8 288.67,-166.8 288.67,-160.8 294.67,-154.8 300.67,-154.8 300.67,-154.8 391.33,-154.8 391.33,-154.8 397.33,-154.8 403.33,-160.8 403.33,-166.8 403.33,-166.8 403.33,-185.82 403.33,-185.82 403.33,-191.82 397.33,-197.82 391.33,-197.82"/>
+<text text-anchor="middle" x="346" y="-181.61" font-family="Noto Sans" font-size="11.00">AIaaS</text>
+<text text-anchor="middle" x="346" y="-165.86" font-family="Noto Sans" font-size="11.00">LLM API (key pool)</text>
+</g>
+<!-- webui&#45;&gt;aiass -->
+<g id="edge16" class="edge">
+<title>webui&#45;&gt;aiass</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M1059.58,-268.99C1055.03,-267.61 1050.48,-266.37 1046,-265.34 774.13,-202.4 687.93,-294.75 420,-216.71 408.42,-213.34 396.58,-208.02 385.86,-202.37"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="387.32,-200.37 380,-199.16 384.97,-204.67 387.32,-200.37"/>
+<text text-anchor="middle" x="974.64" y="-240.91" font-family="Noto Sans" font-size="9.00" fill="#5b6770">LLM calls</text>
+</g>
+<!-- s3 -->
+<g id="node25" class="node">
+<title>s3</title>
+<path fill="#fdecef" stroke="#b5485d" stroke-width="1.4" d="M569.71,-75.78C569.71,-78.74 543.84,-81.15 512,-81.15 480.16,-81.15 454.3,-78.74 454.3,-75.78 454.3,-75.78 454.3,-27.38 454.3,-27.38 454.3,-24.41 480.16,-22 512,-22 543.84,-22 569.71,-24.41 569.71,-27.38 569.71,-27.38 569.71,-75.78 569.71,-75.78"/>
+<path fill="none" stroke="#b5485d" stroke-width="1.4" d="M569.71,-75.78C569.71,-72.81 543.84,-70.4 512,-70.4 480.16,-70.4 454.3,-72.81 454.3,-75.78"/>
+<text text-anchor="middle" x="512" y="-56.88" font-family="Noto Sans" font-size="11.00">S3 object storage</text>
+<text text-anchor="middle" x="512" y="-41.13" font-family="Noto Sans" font-size="11.00">DB backups + Loki</text>
+</g>
+<!-- owuidb&#45;&gt;s3 -->
+<g id="edge25" class="edge">
+<title>owuidb&#45;&gt;s3</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M1021.18,-162.4C914.12,-139.31 690.51,-91.08 578.68,-66.96"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="579.45,-64.62 572.09,-65.54 578.42,-69.41 579.45,-64.62"/>
+<text text-anchor="middle" x="817.69" y="-105.35" font-family="Noto Sans" font-size="9.00" fill="#5b6770">barman WAL + full</text>
+</g>
+<!-- statedb&#45;&gt;s3 -->
+<g id="edge26" class="edge">
+<title>statedb&#45;&gt;s3</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M1187.92,-137.14C1178.07,-131.21 1167.52,-125.78 1157,-121.9 1052.02,-83.16 721.38,-62.79 578.67,-55.62"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="579.03,-53.18 571.92,-55.28 578.79,-58.08 579.03,-53.18"/>
+<text text-anchor="middle" x="1167.05" y="-105.35" font-family="Noto Sans" font-size="9.00" fill="#5b6770">barman WAL + full</text>
+</g>
+<!-- prometheus&#45;&gt;grafana -->
+<g id="edge28" class="edge">
+<title>prometheus&#45;&gt;grafana</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M903.01,-298.85C886.65,-298.85 867.39,-298.85 848.77,-298.85"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="848.96,-296.4 841.96,-298.85 848.96,-301.3 848.96,-296.4"/>
+<text text-anchor="middle" x="871.56" y="-306.05" font-family="Noto Sans" font-size="9.00" fill="#5b6770">metrics</text>
+</g>
+<!-- loki -->
+<g id="node20" class="node">
+<title>loki</title>
+<path fill="#eaf2fb" stroke="#4a78b5" stroke-width="1.4" d="M787.96,-492.25C787.96,-492.25 746.04,-492.25 746.04,-492.25 740.04,-492.25 734.04,-486.25 734.04,-480.25 734.04,-480.25 734.04,-461.23 734.04,-461.23 734.04,-455.23 740.04,-449.23 746.04,-449.23 746.04,-449.23 787.96,-449.23 787.96,-449.23 793.96,-449.23 799.96,-455.23 799.96,-461.23 799.96,-461.23 799.96,-480.25 799.96,-480.25 799.96,-486.25 793.96,-492.25 787.96,-492.25"/>
+<text text-anchor="middle" x="767" y="-476.04" font-family="Noto Sans" font-size="11.00">Loki</text>
+<text text-anchor="middle" x="767" y="-460.29" font-family="Noto Sans" font-size="11.00">log store</text>
+</g>
+<!-- loki&#45;&gt;grafana -->
+<g id="edge29" class="edge">
+<title>loki&#45;&gt;grafana</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M767.74,-448.91C768.79,-418.98 770.75,-363.65 771.95,-329.47"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="774.39,-329.9 772.19,-322.82 769.49,-329.72 774.39,-329.9"/>
+<text text-anchor="middle" x="777.91" y="-414.31" font-family="Noto Sans" font-size="9.00" fill="#5b6770">logs</text>
+</g>
+<!-- loki&#45;&gt;s3 -->
+<g id="edge27" class="edge">
+<title>loki&#45;&gt;s3</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M733.73,-448.83C662.66,-405.4 489.42,-306.11 329,-265.34 301,-258.22 89.29,-270.5 69.5,-249.46 -46.72,-125.91 295,-74.82 445.11,-58.71"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="445.18,-61.17 451.89,-58 444.67,-56.29 445.18,-61.17"/>
+<text text-anchor="middle" x="118.25" y="-240.91" font-family="Noto Sans" font-size="9.00" fill="#5b6770">chunks (or interim PVC)</text>
+</g>
+<!-- promtail -->
+<g id="node21" class="node">
+<title>promtail</title>
+<path fill="#ffffff" stroke="#4a78b5" stroke-width="1.4" stroke-dasharray="5,2" d="M810.83,-638.01C810.83,-638.01 723.17,-638.01 723.17,-638.01 717.17,-638.01 711.17,-632.01 711.17,-626.01 711.17,-626.01 711.17,-614.01 711.17,-614.01 711.17,-608.01 717.17,-602.01 723.17,-602.01 723.17,-602.01 810.83,-602.01 810.83,-602.01 816.83,-602.01 822.83,-608.01 822.83,-614.01 822.83,-614.01 822.83,-626.01 822.83,-626.01 822.83,-632.01 816.83,-638.01 810.83,-638.01"/>
+<text text-anchor="middle" x="767" y="-617.44" font-family="Noto Sans" font-size="11.00">promtail / logsink</text>
+</g>
+<!-- promtail&#45;&gt;loki -->
+<g id="edge33" class="edge">
+<title>promtail&#45;&gt;loki</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M767,-601.54C767,-576.82 767,-531.31 767,-501.28"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="769.45,-501.47 767,-494.47 764.55,-501.47 769.45,-501.47"/>
+<text text-anchor="middle" x="775.62" y="-569.95" font-family="Noto Sans" font-size="9.00" fill="#5b6770">logs</text>
+</g>
+<!-- gitlab -->
+<g id="node24" class="node">
+<title>gitlab</title>
+<path fill="#fff9db" stroke="#b7950b" stroke-width="1.4" d="M558.46,-492.25C558.46,-492.25 417.55,-492.25 417.55,-492.25 411.55,-492.25 405.55,-486.25 405.55,-480.25 405.55,-480.25 405.55,-461.23 405.55,-461.23 405.55,-455.23 411.55,-449.23 417.55,-449.23 417.55,-449.23 558.46,-449.23 558.46,-449.23 564.46,-449.23 570.46,-455.23 570.46,-461.23 570.46,-461.23 570.46,-480.25 570.46,-480.25 570.46,-486.25 564.46,-492.25 558.46,-492.25"/>
+<text text-anchor="middle" x="488" y="-476.04" font-family="Noto Sans" font-size="11.00">GitLab the project</text>
+<text text-anchor="middle" x="488" y="-460.29" font-family="Noto Sans" font-size="11.00">content repos + CI + registry</text>
+</g>
+<!-- gitlab&#45;&gt;pipecontrol -->
+<g id="edge19" class="edge">
+<title>gitlab&#45;&gt;pipecontrol</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M570.73,-459.68C606.17,-455.76 648.06,-451.63 686,-449.23 781.39,-443.19 1455.02,-458.52 1546,-429.23 1597.11,-412.78 1641.29,-367.69 1667.76,-335.37"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1669.43,-337.21 1671.9,-330.22 1665.61,-334.14 1669.43,-337.21"/>
+<text text-anchor="middle" x="1630.83" y="-420.68" font-family="Noto Sans" font-size="9.00" fill="#5b6770">content repos</text>
+<text text-anchor="middle" x="1630.83" y="-407.93" font-family="Noto Sans" font-size="9.00" fill="#5b6770">CI &#45;&gt; /sync?wait=1</text>
+</g>
+<!-- clusterprom -->
+<g id="node26" class="node">
+<title>clusterprom</title>
+<path fill="#fdecef" stroke="#b5485d" stroke-width="1.4" d="M361.7,-492.25C361.7,-492.25 264.3,-492.25 264.3,-492.25 258.3,-492.25 252.3,-486.25 252.3,-480.25 252.3,-480.25 252.3,-461.23 252.3,-461.23 252.3,-455.23 258.3,-449.23 264.3,-449.23 264.3,-449.23 361.7,-449.23 361.7,-449.23 367.7,-449.23 373.7,-455.23 373.7,-461.23 373.7,-461.23 373.7,-480.25 373.7,-480.25 373.7,-486.25 367.7,-492.25 361.7,-492.25"/>
+<text text-anchor="middle" x="313" y="-476.04" font-family="Noto Sans" font-size="11.00">cluster&#45;prometheus</text>
+<text text-anchor="middle" x="313" y="-460.29" font-family="Noto Sans" font-size="11.00">cluster Prometheus</text>
+</g>
+<!-- clusterprom&#45;&gt;grafana -->
+<g id="edge30" class="edge">
+<title>clusterprom&#45;&gt;grafana</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M369,-448.77C412.88,-433.36 475.82,-413.48 532.75,-403.73 551.31,-400.56 685.39,-404.6 702,-395.73 729.18,-381.22 748.74,-351.21 760.37,-328.6"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="762.52,-329.78 763.42,-322.41 758.12,-327.61 762.52,-329.78"/>
+<text text-anchor="middle" x="559.38" y="-414.31" font-family="Noto Sans" font-size="9.00" fill="#5b6770">infra metrics</text>
+</g>
+</g>
+
+    </svg>
+  </g>
+  <g id="panel-B">
+    <rect x="60.0" y="995.0" width="723.3" height="500.0" rx="10"
+          fill="#FFFFFF" stroke="#D8DEE6" stroke-width="1.5"/>
+    <circle cx="78.0" cy="1013.0" r="9" fill="#1F2933"/>
+    <text x="78.0" y="1017.0" text-anchor="middle"
+          font-family="Noto Sans" font-size="10" font-weight="700" fill="#FFFFFF">B</text>
+    <svg x="60.0" y="995.0" width="723.3" height="500.0"
+         viewBox="0.00 0.00 1162.29 803.41" preserveAspectRatio="xMidYMid meet">
+
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(25.2 778.21)">
+<title>course_stack</title>
+<polygon fill="#ffffff" stroke="none" points="-25.2,25.2 -25.2,-778.21 1137.09,-778.21 1137.09,25.2 -25.2,25.2"/>
+<text text-anchor="middle" x="555.94" y="-728.11" font-family="Noto Sans" font-size="22.00" fill="#1f2933">Per&#45;Course stack</text>
+<text text-anchor="middle" x="555.94" y="-697.36" font-family="Noto Sans" font-size="22.00" fill="#1f2933">(every Course gets this isolated set of resources)</text>
+<g id="clust1" class="cluster">
+<title>cluster_course</title>
+<path fill="#ffffff" stroke="#3e8e5a" d="M261.66,-141.51C261.66,-141.51 787.23,-141.51 787.23,-141.51 793.23,-141.51 799.23,-147.51 799.23,-153.51 799.23,-153.51 799.23,-663.51 799.23,-663.51 799.23,-669.51 793.23,-675.51 787.23,-675.51 787.23,-675.51 261.66,-675.51 261.66,-675.51 255.66,-675.51 249.66,-669.51 249.66,-663.51 249.66,-663.51 249.66,-153.51 249.66,-153.51 249.66,-147.51 255.66,-141.51 261.66,-141.51"/>
+<text text-anchor="middle" x="524.44" y="-659.16" font-family="Noto Sans" font-size="13.00" fill="#3e8e5a">Course &lt;slug&gt; &#160;(resource prefix: fixbot&#45;&lt;slug&gt;&#45;*)</text>
+</g>
+<!-- browser -->
+<g id="node1" class="node">
+<title>browser</title>
+<path fill="#f2f2f2" stroke="#777777" stroke-width="1.4" d="M122.53,-461.02C122.53,-461.02 37.12,-461.02 37.12,-461.02 31.12,-461.02 25.12,-455.02 25.12,-449.02 25.12,-449.02 25.12,-430 25.12,-430 25.12,-424 31.12,-418 37.12,-418 37.12,-418 122.53,-418 122.53,-418 128.53,-418 134.53,-424 134.53,-430 134.53,-430 134.53,-449.02 134.53,-449.02 134.53,-455.02 128.53,-461.02 122.53,-461.02"/>
+<text text-anchor="middle" x="79.83" y="-444.81" font-family="Noto Sans" font-size="11.00">Student / Teacher</text>
+<text text-anchor="middle" x="79.83" y="-429.06" font-family="Noto Sans" font-size="11.00">browser</text>
+</g>
+<!-- ingress -->
+<g id="node2" class="node">
+<title>ingress</title>
+<path fill="#fff4e5" stroke="#e8a33d" stroke-width="1.4" d="M147.66,-346.02C147.66,-346.02 12,-346.02 12,-346.02 6,-346.02 0,-340.02 0,-334.02 0,-334.02 0,-315 0,-315 0,-309 6,-303 12,-303 12,-303 147.66,-303 147.66,-303 153.66,-303 159.66,-309 159.66,-315 159.66,-315 159.66,-334.02 159.66,-334.02 159.66,-340.02 153.66,-346.02 147.66,-346.02"/>
+<text text-anchor="middle" x="79.83" y="-329.81" font-family="Noto Sans" font-size="11.00">Ingress + TLS</text>
+<text text-anchor="middle" x="79.83" y="-314.06" font-family="Noto Sans" font-size="11.00">&lt;slug&gt;.fixbot.example.com</text>
+</g>
+<!-- browser&#45;&gt;ingress -->
+<g id="edge1" class="edge">
+<title>browser&#45;&gt;ingress</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M79.83,-417.69C79.83,-400.05 79.83,-375 79.83,-355.31"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="82.28,-355.38 79.83,-348.38 77.38,-355.38 82.28,-355.38"/>
+<text text-anchor="middle" x="70.45" y="-379.83" font-family="Noto Sans" font-size="9.00" fill="#5b6770">HTTPS</text>
+</g>
+<!-- webui -->
+<g id="node3" class="node">
+<title>webui</title>
+<path fill="#e8f5ec" stroke="#3e8e5a" stroke-width="1.4" d="M409.94,-361.77C409.94,-361.77 284.03,-361.77 284.03,-361.77 278.03,-361.77 272.03,-355.77 272.03,-349.77 272.03,-349.77 272.03,-299.25 272.03,-299.25 272.03,-293.25 278.03,-287.25 284.03,-287.25 284.03,-287.25 409.94,-287.25 409.94,-287.25 415.94,-287.25 421.94,-293.25 421.94,-299.25 421.94,-299.25 421.94,-349.77 421.94,-349.77 421.94,-355.77 415.94,-361.77 409.94,-361.77"/>
+<text text-anchor="middle" x="346.99" y="-345.56" font-family="Noto Sans" font-size="11.00">Open WebUI</text>
+<text text-anchor="middle" x="346.99" y="-329.81" font-family="Noto Sans" font-size="11.00">replicas: 1 = Deployment</text>
+<text text-anchor="middle" x="346.99" y="-314.06" font-family="Noto Sans" font-size="11.00">replicas &gt; 1 = StatefulSet</text>
+<text text-anchor="middle" x="346.99" y="-298.31" font-family="Noto Sans" font-size="11.00">(Pipes, chats, knowledge)</text>
+</g>
+<!-- ingress&#45;&gt;webui -->
+<g id="edge2" class="edge">
+<title>ingress&#45;&gt;webui</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M160.03,-324.51C192.53,-324.51 230.17,-324.51 263.04,-324.51"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="262.77,-326.96 269.77,-324.51 262.77,-322.06 262.77,-326.96"/>
+<text text-anchor="middle" x="212.66" y="-328.71" font-family="Noto Sans" font-size="9.00" fill="#5b6770">host route</text>
+</g>
+<!-- redis -->
+<g id="node4" class="node">
+<title>redis</title>
+<path fill="#e8f5ec" stroke="#3e8e5a" stroke-width="1.4" stroke-dasharray="5,2" d="M402.82,-555.02C402.82,-555.02 291.16,-555.02 291.16,-555.02 285.16,-555.02 279.16,-549.02 279.16,-543.02 279.16,-543.02 279.16,-524 279.16,-524 279.16,-518 285.16,-512 291.16,-512 291.16,-512 402.82,-512 402.82,-512 408.82,-512 414.82,-518 414.82,-524 414.82,-524 414.82,-543.02 414.82,-543.02 414.82,-549.02 408.82,-555.02 402.82,-555.02"/>
+<text text-anchor="middle" x="346.99" y="-538.81" font-family="Noto Sans" font-size="11.00">Dragonfly / Redis</text>
+<text text-anchor="middle" x="346.99" y="-523.06" font-family="Noto Sans" font-size="11.00">sessions + websockets</text>
+</g>
+<!-- webui&#45;&gt;redis -->
+<g id="edge5" class="edge">
+<title>webui&#45;&gt;redis</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M271.88,-355.12C235.43,-375.27 201.81,-404.94 213.71,-442.88 222.09,-469.56 227.78,-477.11 249.66,-494.51 256.18,-499.69 263.48,-504.27 271.06,-508.29"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="269.62,-510.31 276.97,-511.25 271.81,-505.92 269.62,-510.31"/>
+<text text-anchor="middle" x="212.66" y="-434.33" font-family="Noto Sans" font-size="9.00" fill="#5b6770">replicas &gt; 1</text>
+</g>
+<!-- chroma -->
+<g id="node5" class="node">
+<title>chroma</title>
+<path fill="#e8f5ec" stroke="#3e8e5a" stroke-width="1.4" stroke-dasharray="5,2" d="M375.44,-476.02C375.44,-476.02 318.53,-476.02 318.53,-476.02 312.53,-476.02 306.53,-470.02 306.53,-464.02 306.53,-464.02 306.53,-445 306.53,-445 306.53,-439 312.53,-433 318.53,-433 318.53,-433 375.44,-433 375.44,-433 381.44,-433 387.44,-439 387.44,-445 387.44,-445 387.44,-464.02 387.44,-464.02 387.44,-470.02 381.44,-476.02 375.44,-476.02"/>
+<text text-anchor="middle" x="346.99" y="-459.81" font-family="Noto Sans" font-size="11.00">Chroma</text>
+<text text-anchor="middle" x="346.99" y="-444.06" font-family="Noto Sans" font-size="11.00">vector store</text>
+</g>
+<!-- webui&#45;&gt;chroma -->
+<g id="edge6" class="edge">
+<title>webui&#45;&gt;chroma</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M346.99,-362.11C346.99,-381.74 346.99,-405.45 346.99,-423.94"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="344.54,-423.85 346.99,-430.85 349.44,-423.85 344.54,-423.85"/>
+<text text-anchor="middle" x="337.61" y="-395.21" font-family="Noto Sans" font-size="9.00" fill="#5b6770">replicas &gt; 1</text>
+</g>
+<!-- contentpvc -->
+<g id="node6" class="node">
+<title>contentpvc</title>
+<path fill="#f3eafb" stroke="#7b4fa6" stroke-width="1.4" d="M758.85,-211.71C758.85,-214.68 718.2,-217.09 668.15,-217.09 618.1,-217.09 577.44,-214.68 577.44,-211.71 577.44,-211.71 577.44,-163.31 577.44,-163.31 577.44,-160.34 618.1,-157.93 668.15,-157.93 718.2,-157.93 758.85,-160.34 758.85,-163.31 758.85,-163.31 758.85,-211.71 758.85,-211.71"/>
+<path fill="none" stroke="#7b4fa6" stroke-width="1.4" d="M758.85,-211.71C758.85,-208.74 718.2,-206.33 668.15,-206.33 618.1,-206.33 577.44,-208.74 577.44,-211.71"/>
+<text text-anchor="middle" x="668.15" y="-192.81" font-family="Noto Sans" font-size="11.00">Shared content PVC</text>
+<text text-anchor="middle" x="668.15" y="-177.06" font-family="Noto Sans" font-size="11.00">mounted read&#45;only via subPath</text>
+</g>
+<!-- webui&#45;&gt;contentpvc -->
+<g id="edge10" class="edge">
+<title>webui&#45;&gt;contentpvc</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M422.42,-291.97C461.31,-275.03 509.71,-254.04 553.07,-235.51 565.06,-230.38 577.78,-224.99 590.21,-219.74"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="591.02,-222.06 596.51,-217.09 589.11,-217.55 591.02,-222.06"/>
+<text text-anchor="middle" x="490.69" y="-280.93" font-family="Noto Sans" font-size="9.00" fill="#5b6770">subPath mount</text>
+</g>
+<!-- owuidb -->
+<g id="node7" class="node">
+<title>owuidb</title>
+<path fill="#f3eafb" stroke="#7b4fa6" stroke-width="1.4" d="M783.23,-526.29C783.23,-532.51 731.65,-537.57 668.15,-537.57 604.65,-537.57 553.07,-532.51 553.07,-526.29 553.07,-526.29 553.07,-424.73 553.07,-424.73 553.07,-418.51 604.65,-413.45 668.15,-413.45 731.65,-413.45 783.23,-418.51 783.23,-424.73 783.23,-424.73 783.23,-526.29 783.23,-526.29"/>
+<path fill="none" stroke="#7b4fa6" stroke-width="1.4" d="M783.23,-526.29C783.23,-520.06 731.65,-515 668.15,-515 604.65,-515 553.07,-520.06 553.07,-526.29"/>
+<text text-anchor="middle" x="668.15" y="-504.44" font-family="Noto Sans" font-size="11.00">Open WebUI DB</text>
+<text text-anchor="middle" x="668.15" y="-488.69" font-family="Noto Sans" font-size="11.00">CNPG Postgres</text>
+<text text-anchor="middle" x="668.15" y="-472.94" font-family="Noto Sans" font-size="11.00">users / chats / settings</text>
+<text text-anchor="middle" x="668.15" y="-457.19" font-family="Noto Sans" font-size="11.00">NetworkPolicy: ingress&#45;only</text>
+<text text-anchor="middle" x="668.15" y="-441.44" font-family="Noto Sans" font-size="11.00">(webui, operator, db&#45;dump, prometheus)</text>
+</g>
+<!-- webui&#45;&gt;owuidb -->
+<g id="edge7" class="edge">
+<title>webui&#45;&gt;owuidb</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M422.42,-359.72C458.84,-376.96 503.64,-398.15 544.91,-417.67"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="543.69,-419.81 551.06,-420.59 545.78,-415.38 543.69,-419.81"/>
+<text text-anchor="middle" x="490.69" y="-408.74" font-family="Noto Sans" font-size="9.00" fill="#5b6770">SQL</text>
+</g>
+<!-- statedb -->
+<g id="node8" class="node">
+<title>statedb</title>
+<path fill="#f3eafb" stroke="#7b4fa6" stroke-width="1.4" d="M783.23,-366.29C783.23,-372.51 731.65,-377.57 668.15,-377.57 604.65,-377.57 553.07,-372.51 553.07,-366.29 553.07,-366.29 553.07,-264.73 553.07,-264.73 553.07,-258.51 604.65,-253.45 668.15,-253.45 731.65,-253.45 783.23,-258.51 783.23,-264.73 783.23,-264.73 783.23,-366.29 783.23,-366.29"/>
+<path fill="none" stroke="#7b4fa6" stroke-width="1.4" d="M783.23,-366.29C783.23,-360.06 731.65,-355 668.15,-355 604.65,-355 553.07,-360.06 553.07,-366.29"/>
+<text text-anchor="middle" x="668.15" y="-344.44" font-family="Noto Sans" font-size="11.00">Pipe State DB</text>
+<text text-anchor="middle" x="668.15" y="-328.69" font-family="Noto Sans" font-size="11.00">CNPG Postgres</text>
+<text text-anchor="middle" x="668.15" y="-312.94" font-family="Noto Sans" font-size="11.00">Pipe Sessions / valves</text>
+<text text-anchor="middle" x="668.15" y="-297.19" font-family="Noto Sans" font-size="11.00">NetworkPolicy: ingress&#45;only</text>
+<text text-anchor="middle" x="668.15" y="-281.44" font-family="Noto Sans" font-size="11.00">(webui, operator, db&#45;dump, prometheus)</text>
+</g>
+<!-- webui&#45;&gt;statedb -->
+<g id="edge8" class="edge">
+<title>webui&#45;&gt;statedb</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M422.42,-322.41C458.54,-321.39 502.89,-320.14 543.88,-318.99"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="543.94,-321.44 550.87,-318.79 543.81,-316.54 543.94,-321.44"/>
+<text text-anchor="middle" x="490.69" y="-325.54" font-family="Noto Sans" font-size="9.00" fill="#5b6770">SQL (Pipe state)</text>
+</g>
+<!-- data -->
+<g id="node9" class="node">
+<title>data</title>
+<path fill="#f3eafb" stroke="#7b4fa6" stroke-width="1.4" d="M720.6,-627.71C720.6,-630.68 697.09,-633.09 668.15,-633.09 639.21,-633.09 615.69,-630.68 615.69,-627.71 615.69,-627.71 615.69,-579.31 615.69,-579.31 615.69,-576.34 639.21,-573.93 668.15,-573.93 697.09,-573.93 720.6,-576.34 720.6,-579.31 720.6,-579.31 720.6,-627.71 720.6,-627.71"/>
+<path fill="none" stroke="#7b4fa6" stroke-width="1.4" d="M720.6,-627.71C720.6,-624.74 697.09,-622.33 668.15,-622.33 639.21,-622.33 615.69,-624.74 615.69,-627.71"/>
+<text text-anchor="middle" x="668.15" y="-608.81" font-family="Noto Sans" font-size="11.00">Course data PVC</text>
+<text text-anchor="middle" x="668.15" y="-593.06" font-family="Noto Sans" font-size="11.00">uploads / cache</text>
+</g>
+<!-- webui&#45;&gt;data -->
+<g id="edge9" class="edge">
+<title>webui&#45;&gt;data</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M381.64,-362.14C396.03,-378.25 413.02,-397.29 428.32,-414.51 483.9,-477.06 485.09,-506.73 553.07,-555.51 569.35,-567.19 588.89,-576.73 607.18,-584.13"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="606.23,-586.39 613.64,-586.67 608.02,-581.83 606.23,-586.39"/>
+<text text-anchor="middle" x="490.69" y="-534.92" font-family="Noto Sans" font-size="9.00" fill="#5b6770">files</text>
+</g>
+<!-- oidc -->
+<g id="node11" class="node">
+<title>oidc</title>
+<path fill="#fdecef" stroke="#b5485d" stroke-width="1.4" d="M691.73,-122.02C691.73,-122.02 644.57,-122.02 644.57,-122.02 638.57,-122.02 632.57,-116.02 632.57,-110.02 632.57,-110.02 632.57,-91 632.57,-91 632.57,-85 638.57,-79 644.57,-79 644.57,-79 691.73,-79 691.73,-79 697.73,-79 703.73,-85 703.73,-91 703.73,-91 703.73,-110.02 703.73,-110.02 703.73,-116.02 697.73,-122.02 691.73,-122.02"/>
+<text text-anchor="middle" x="668.15" y="-105.81" font-family="Noto Sans" font-size="11.00">OIDC</text>
+<text text-anchor="middle" x="668.15" y="-90.06" font-family="Noto Sans" font-size="11.00">(SSO only)</text>
+</g>
+<!-- webui&#45;&gt;oidc -->
+<g id="edge3" class="edge">
+<title>webui&#45;&gt;oidc</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M383.78,-286.99C431.82,-237.37 515.46,-153.69 553.07,-132.51 574.83,-120.26 601.6,-112.43 623.74,-107.58"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="624.01,-110.03 630.36,-106.21 623.01,-105.23 624.01,-110.03"/>
+<text text-anchor="middle" x="490.69" y="-217.53" font-family="Noto Sans" font-size="9.00" fill="#5b6770">login</text>
+</g>
+<!-- aiass -->
+<g id="node12" class="node">
+<title>aiass</title>
+<path fill="#fdecef" stroke="#b5485d" stroke-width="1.4" d="M730.73,-43.02C730.73,-43.02 605.57,-43.02 605.57,-43.02 599.57,-43.02 593.57,-37.02 593.57,-31.02 593.57,-31.02 593.57,-12 593.57,-12 593.57,-6 599.57,0 605.57,0 605.57,0 730.73,0 730.73,0 736.73,0 742.73,-6 742.73,-12 742.73,-12 742.73,-31.02 742.73,-31.02 742.73,-37.02 736.73,-43.02 730.73,-43.02"/>
+<text text-anchor="middle" x="668.15" y="-26.81" font-family="Noto Sans" font-size="11.00">AIaaS LLM API</text>
+<text text-anchor="middle" x="668.15" y="-11.06" font-family="Noto Sans" font-size="11.00">(singular key or key pool)</text>
+</g>
+<!-- webui&#45;&gt;aiass -->
+<g id="edge4" class="edge">
+<title>webui&#45;&gt;aiass</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M387.7,-287.1C402.19,-271.67 417.63,-252.88 428.32,-233.51 450.43,-193.46 431.55,-172.55 457.32,-134.76 487.23,-90.89 539.85,-62.55 584.9,-45.19"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="585.68,-47.52 591.38,-42.77 583.96,-42.93 585.68,-47.52"/>
+<text text-anchor="middle" x="490.69" y="-138.96" font-family="Noto Sans" font-size="9.00" fill="#5b6770">chat completion</text>
+</g>
+<!-- pgbackup -->
+<g id="node13" class="node">
+<title>pgbackup</title>
+<path fill="#fdecef" stroke="#b5485d" stroke-width="1.4" d="M1106.26,-514.71C1106.26,-517.68 1056.7,-520.09 995.68,-520.09 934.67,-520.09 885.1,-517.68 885.1,-514.71 885.1,-514.71 885.1,-466.31 885.1,-466.31 885.1,-463.34 934.67,-460.93 995.68,-460.93 1056.7,-460.93 1106.26,-463.34 1106.26,-466.31 1106.26,-466.31 1106.26,-514.71 1106.26,-514.71"/>
+<path fill="none" stroke="#b5485d" stroke-width="1.4" d="M1106.26,-514.71C1106.26,-511.74 1056.7,-509.33 995.68,-509.33 934.67,-509.33 885.1,-511.74 885.1,-514.71"/>
+<text text-anchor="middle" x="995.68" y="-495.81" font-family="Noto Sans" font-size="11.00">s3://example&#45;fixbot&#45;pg&#45;backups/&lt;slug&gt;</text>
+<text text-anchor="middle" x="995.68" y="-480.06" font-family="Noto Sans" font-size="11.00">barman: WAL + weekly full</text>
+</g>
+<!-- owuidb&#45;&gt;pgbackup -->
+<g id="edge12" class="edge">
+<title>owuidb&#45;&gt;pgbackup</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M783.46,-480.78C813.39,-482.16 845.73,-483.65 875.89,-485.04"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="875.68,-487.48 882.79,-485.35 875.91,-482.58 875.68,-487.48"/>
+<text text-anchor="middle" x="831.35" y="-487.66" font-family="Noto Sans" font-size="9.00" fill="#5b6770">barman</text>
+</g>
+<!-- statebackup -->
+<g id="node14" class="node">
+<title>statebackup</title>
+<path fill="#fdecef" stroke="#b5485d" stroke-width="1.4" d="M1111.89,-324.71C1111.89,-327.68 1059.81,-330.09 995.68,-330.09 931.56,-330.09 879.48,-327.68 879.48,-324.71 879.48,-324.71 879.48,-276.31 879.48,-276.31 879.48,-273.34 931.56,-270.93 995.68,-270.93 1059.81,-270.93 1111.89,-273.34 1111.89,-276.31 1111.89,-276.31 1111.89,-324.71 1111.89,-324.71"/>
+<path fill="none" stroke="#b5485d" stroke-width="1.4" d="M1111.89,-324.71C1111.89,-321.74 1059.81,-319.33 995.68,-319.33 931.56,-319.33 879.48,-321.74 879.48,-324.71"/>
+<text text-anchor="middle" x="995.68" y="-305.81" font-family="Noto Sans" font-size="11.00">s3://example&#45;fixbot&#45;state&#45;backups/&lt;slug&gt;</text>
+<text text-anchor="middle" x="995.68" y="-290.06" font-family="Noto Sans" font-size="11.00">barman: WAL + weekly full</text>
+</g>
+<!-- statedb&#45;&gt;statebackup -->
+<g id="edge13" class="edge">
+<title>statedb&#45;&gt;statebackup</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M783.46,-310.24C811.52,-308.95 841.69,-307.56 870.21,-306.25"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="870.15,-308.7 877.03,-305.93 869.93,-303.81 870.15,-308.7"/>
+<text text-anchor="middle" x="831.35" y="-313.11" font-family="Noto Sans" font-size="9.00" fill="#5b6770">barman</text>
+</g>
+<!-- provision -->
+<g id="node10" class="node">
+<title>provision</title>
+<path fill="#ffffff" stroke="#4a78b5" stroke-width="1.4" stroke-dasharray="5,2" d="M416.32,-215.89C416.32,-215.89 277.66,-215.89 277.66,-215.89 271.66,-215.89 265.66,-209.89 265.66,-203.89 265.66,-203.89 265.66,-169.12 265.66,-169.12 265.66,-163.12 271.66,-157.12 277.66,-157.12 277.66,-157.12 416.32,-157.12 416.32,-157.12 422.32,-157.12 428.32,-163.12 428.32,-169.12 428.32,-169.12 428.32,-203.89 428.32,-203.89 428.32,-209.89 422.32,-215.89 416.32,-215.89"/>
+<text text-anchor="middle" x="346.99" y="-199.69" font-family="Noto Sans" font-size="11.00">Provisioning Job</text>
+<text text-anchor="middle" x="346.99" y="-183.94" font-family="Noto Sans" font-size="11.00">(post&#45;install / post&#45;upgrade)</text>
+<text text-anchor="middle" x="346.99" y="-168.19" font-family="Noto Sans" font-size="11.00">admins + model settings</text>
+</g>
+<!-- provision&#45;&gt;webui -->
+<g id="edge11" class="edge">
+<title>provision&#45;&gt;webui</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="1,5" d="M346.99,-216.11C346.99,-234.12 346.99,-257.51 346.99,-277.95"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="344.54,-277.84 346.99,-284.84 349.44,-277.84 344.54,-277.84"/>
+<text text-anchor="middle" x="337.61" y="-249.4" font-family="Noto Sans" font-size="9.00" fill="#5b6770">reconcile</text>
+</g>
+<!-- dump -->
+<g id="node15" class="node">
+<title>dump</title>
+<path fill="#fdecef" stroke="#b5485d" stroke-width="1.4" d="M1061.26,-424.89C1061.26,-424.89 930.1,-424.89 930.1,-424.89 924.1,-424.89 918.1,-418.89 918.1,-412.89 918.1,-412.89 918.1,-378.12 918.1,-378.12 918.1,-372.12 924.1,-366.12 930.1,-366.12 930.1,-366.12 1061.26,-366.12 1061.26,-366.12 1067.26,-366.12 1073.26,-372.12 1073.26,-378.12 1073.26,-378.12 1073.26,-412.89 1073.26,-412.89 1073.26,-418.89 1067.26,-424.89 1061.26,-424.89"/>
+<text text-anchor="middle" x="995.68" y="-408.69" font-family="Noto Sans" font-size="11.00">Interim pg_dump CronJob</text>
+<text text-anchor="middle" x="995.68" y="-392.94" font-family="Noto Sans" font-size="11.00">daily 03:15 UTC, 14 d</text>
+<text text-anchor="middle" x="995.68" y="-377.19" font-family="Noto Sans" font-size="11.00">nfs&#45;csi&#45;backup PVC</text>
+</g>
+<!-- dump&#45;&gt;owuidb -->
+<g id="edge14" class="edge">
+<title>dump&#45;&gt;owuidb</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="1,5" d="M917.9,-414.38C880.4,-423.59 834.37,-434.91 792.13,-445.29"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="791.59,-442.9 785.37,-446.95 792.76,-447.66 791.59,-442.9"/>
+<text text-anchor="middle" x="831.35" y="-444.5" font-family="Noto Sans" font-size="9.00" fill="#5b6770">pg_dump</text>
+</g>
+<!-- dump&#45;&gt;statedb -->
+<g id="edge15" class="edge">
+<title>dump&#45;&gt;statedb</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="1,5" d="M917.9,-376.64C880.4,-367.43 834.37,-356.11 792.13,-345.73"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="792.76,-343.36 785.37,-344.07 791.59,-348.12 792.76,-343.36"/>
+<text text-anchor="middle" x="831.35" y="-362.11" font-family="Noto Sans" font-size="9.00" fill="#5b6770">pg_dump</text>
+</g>
+</g>
+
+    </svg>
+  </g>
+  <g id="panel-C">
+    <rect x="807.3" y="995.0" width="708.9" height="500.0" rx="10"
+          fill="#FFFFFF" stroke="#D8DEE6" stroke-width="1.5"/>
+    <circle cx="825.3" cy="1013.0" r="9" fill="#1F2933"/>
+    <text x="825.3" y="1017.0" text-anchor="middle"
+          font-family="Noto Sans" font-size="10" font-weight="700" fill="#FFFFFF">C</text>
+    <svg x="807.3" y="995.0" width="708.9" height="500.0"
+         viewBox="0.00 0.00 1447.40 1020.90" preserveAspectRatio="xMidYMid meet">
+
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(25.2 995.7)">
+<title>content_pipeline</title>
+<polygon fill="#ffffff" stroke="none" points="-25.2,25.2 -25.2,-995.7 1422.2,-995.7 1422.2,25.2 -25.2,25.2"/>
+<text text-anchor="middle" x="698.5" y="-945.6" font-family="Noto Sans" font-size="22.00" fill="#1f2933">Content delivery pipeline</text>
+<text text-anchor="middle" x="698.5" y="-914.85" font-family="Noto Sans" font-size="22.00" fill="#1f2933">(git&#45;versioned content &#45;&gt; validated &#45;&gt; live in every scoped Course)</text>
+<text text-anchor="middle" x="698.5" y="-884.1" font-family="Noto Sans" font-size="22.00" fill="#1f2933">Invariant: green pipeline &lt;=&gt; that sha is live exactly where it scopes; red &lt;=&gt; nothing of it shipped</text>
+<g id="clust1" class="cluster">
+<title>cluster_gitlab</title>
+<path fill="#ffffff" stroke="#b7950b" d="M20,-652.21C20,-652.21 774,-652.21 774,-652.21 780,-652.21 786,-658.21 786,-664.21 786,-664.21 786,-776.48 786,-776.48 786,-782.48 780,-788.48 774,-788.48 774,-788.48 20,-788.48 20,-788.48 14,-788.48 8,-782.48 8,-776.48 8,-776.48 8,-664.21 8,-664.21 8,-658.21 14,-652.21 20,-652.21"/>
+<text text-anchor="middle" x="397" y="-772.13" font-family="Noto Sans" font-size="13.00" fill="#b7950b">GitLab the project</text>
+</g>
+<g id="clust2" class="cluster">
+<title>cluster_control</title>
+<path fill="#ffffff" stroke="#4a78b5" d="M385,-366.92C385,-366.92 729,-366.92 729,-366.92 735,-366.92 741,-372.92 741,-378.92 741,-378.92 741,-491.19 741,-491.19 741,-497.19 735,-503.19 729,-503.19 729,-503.19 385,-503.19 385,-503.19 379,-503.19 373,-497.19 373,-491.19 373,-491.19 373,-378.92 373,-378.92 373,-372.92 379,-366.92 385,-366.92"/>
+<text text-anchor="middle" x="557" y="-486.84" font-family="Noto Sans" font-size="13.00" fill="#4a78b5">Pipe Control</text>
+</g>
+<g id="clust3" class="cluster">
+<title>cluster_job</title>
+<path fill="#ffffff" stroke="#3e8e5a" d="M375,-173.4C375,-173.4 985,-173.4 985,-173.4 991,-173.4 997,-179.4 997,-185.4 997,-185.4 997,-313.42 997,-313.42 997,-319.42 991,-325.42 985,-325.42 985,-325.42 375,-325.42 375,-325.42 369,-325.42 363,-319.42 363,-313.42 363,-313.42 363,-185.4 363,-185.4 363,-179.4 369,-173.4 375,-173.4"/>
+<text text-anchor="middle" x="680" y="-309.07" font-family="Noto Sans" font-size="13.00" fill="#3e8e5a">Propagate Job &#160;(fixbot&#45;pipe&#45;propagate&#45;*)</text>
+</g>
+<g id="clust4" class="cluster">
+<title>cluster_target</title>
+<path fill="#ffffff" stroke="#3e8e5a" d="M901,-8C901,-8 1377,-8 1377,-8 1383,-8 1389,-14 1389,-20 1389,-20 1389,-132.65 1389,-132.65 1389,-138.65 1383,-144.65 1377,-144.65 1377,-144.65 901,-144.65 901,-144.65 895,-144.65 889,-138.65 889,-132.65 889,-132.65 889,-20 889,-20 889,-14 895,-8 901,-8"/>
+<text text-anchor="middle" x="1139" y="-128.3" font-family="Noto Sans" font-size="13.00" fill="#3e8e5a">Scoped target Courses</text>
+</g>
+<!-- teacher -->
+<g id="node1" class="node">
+<title>teacher</title>
+<path fill="#f2f2f2" stroke="#777777" stroke-width="1.4" d="M332.95,-870.25C332.95,-870.25 231.05,-870.25 231.05,-870.25 225.05,-870.25 219.05,-864.25 219.05,-858.25 219.05,-858.25 219.05,-839.23 219.05,-839.23 219.05,-833.23 225.05,-827.23 231.05,-827.23 231.05,-827.23 332.95,-827.23 332.95,-827.23 338.95,-827.23 344.95,-833.23 344.95,-839.23 344.95,-839.23 344.95,-858.25 344.95,-858.25 344.95,-864.25 338.95,-870.25 332.95,-870.25"/>
+<text text-anchor="middle" x="282" y="-854.04" font-family="Noto Sans" font-size="11.00">Teacher / maintainer</text>
+<text text-anchor="middle" x="282" y="-838.29" font-family="Noto Sans" font-size="11.00">git push</text>
+</g>
+<!-- qkb -->
+<g id="node2" class="node">
+<title>qkb</title>
+<path fill="#fff9db" stroke="#b7950b" stroke-width="1.4" d="M180.2,-722.98C180.2,-722.98 31.8,-722.98 31.8,-722.98 25.8,-722.98 19.8,-716.98 19.8,-710.98 19.8,-710.98 19.8,-676.21 19.8,-676.21 19.8,-670.21 25.8,-664.21 31.8,-664.21 31.8,-664.21 180.2,-664.21 180.2,-664.21 186.2,-664.21 192.2,-670.21 192.2,-676.21 192.2,-676.21 192.2,-710.98 192.2,-710.98 192.2,-716.98 186.2,-722.98 180.2,-722.98"/>
+<text text-anchor="middle" x="106" y="-706.77" font-family="Noto Sans" font-size="11.00">QKB repos</text>
+<text text-anchor="middle" x="106" y="-691.02" font-family="Noto Sans" font-size="11.00">fixbot/qkb/&lt;slug&gt;&#45;&lt;year&gt;</text>
+<text text-anchor="middle" x="106" y="-675.27" font-family="Noto Sans" font-size="11.00">questions + mapping + assets</text>
+</g>
+<!-- teacher&#45;&gt;qkb -->
+<g id="edge1" class="edge">
+<title>teacher&#45;&gt;qkb</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M254.5,-826.86C240.12,-815.74 222.37,-801.66 207,-788.48 184.79,-769.44 160.78,-747.19 141.74,-729.13"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="143.66,-727.58 136.9,-724.53 140.29,-731.13 143.66,-727.58"/>
+<text text-anchor="middle" x="241.42" y="-800.68" font-family="Noto Sans" font-size="9.00" fill="#5b6770">push</text>
+</g>
+<!-- prompts -->
+<g id="node3" class="node">
+<title>prompts</title>
+<path fill="#fff9db" stroke="#b7950b" stroke-width="1.4" d="M330.7,-715.11C330.7,-715.11 233.3,-715.11 233.3,-715.11 227.3,-715.11 221.3,-709.11 221.3,-703.11 221.3,-703.11 221.3,-684.09 221.3,-684.09 221.3,-678.09 227.3,-672.09 233.3,-672.09 233.3,-672.09 330.7,-672.09 330.7,-672.09 336.7,-672.09 342.7,-678.09 342.7,-684.09 342.7,-684.09 342.7,-703.11 342.7,-703.11 342.7,-709.11 336.7,-715.11 330.7,-715.11"/>
+<text text-anchor="middle" x="282" y="-698.9" font-family="Noto Sans" font-size="11.00">Pipes / sys&#45;prompts</text>
+<text text-anchor="middle" x="282" y="-683.15" font-family="Noto Sans" font-size="11.00">main.txt per Type</text>
+</g>
+<!-- teacher&#45;&gt;prompts -->
+<g id="edge2" class="edge">
+<title>teacher&#45;&gt;prompts</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M282,-826.77C282,-800.19 282,-754.23 282,-724.11"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="284.45,-724.28 282,-717.28 279.55,-724.28 284.45,-724.28"/>
+<text text-anchor="middle" x="292.12" y="-800.68" font-family="Noto Sans" font-size="9.00" fill="#5b6770">push</text>
+</g>
+<!-- bases -->
+<g id="node4" class="node">
+<title>bases</title>
+<path fill="#fff9db" stroke="#b7950b" stroke-width="1.4" d="M472.58,-715.11C472.58,-715.11 383.42,-715.11 383.42,-715.11 377.42,-715.11 371.42,-709.11 371.42,-703.11 371.42,-703.11 371.42,-684.09 371.42,-684.09 371.42,-678.09 377.42,-672.09 383.42,-672.09 383.42,-672.09 472.58,-672.09 472.58,-672.09 478.58,-672.09 484.58,-678.09 484.58,-684.09 484.58,-684.09 484.58,-703.11 484.58,-703.11 484.58,-709.11 478.58,-715.11 472.58,-715.11"/>
+<text text-anchor="middle" x="428" y="-698.9" font-family="Noto Sans" font-size="11.00">Pipes / pipe&#45;bases</text>
+<text text-anchor="middle" x="428" y="-683.15" font-family="Noto Sans" font-size="11.00">main.py per Type</text>
+</g>
+<!-- teacher&#45;&gt;bases -->
+<g id="edge3" class="edge">
+<title>teacher&#45;&gt;bases</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M311.94,-826.85C326.3,-816.16 343.3,-802.48 357,-788.48 376.81,-768.24 395.99,-742.4 409.4,-722.95"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="411.4,-724.36 413.32,-717.2 407.35,-721.61 411.4,-724.36"/>
+<text text-anchor="middle" x="357.8" y="-800.68" font-family="Noto Sans" font-size="9.00" fill="#5b6770">push</text>
+</g>
+<!-- validate -->
+<g id="node7" class="node">
+<title>validate</title>
+<path fill="#e8f5ec" stroke="#3e8e5a" stroke-width="1.4" d="M466.2,-613.46C466.2,-613.46 389.8,-613.46 389.8,-613.46 383.8,-613.46 377.8,-607.46 377.8,-601.46 377.8,-601.46 377.8,-566.69 377.8,-566.69 377.8,-560.69 383.8,-554.69 389.8,-554.69 389.8,-554.69 466.2,-554.69 466.2,-554.69 472.2,-554.69 478.2,-560.69 478.2,-566.69 478.2,-566.69 478.2,-601.46 478.2,-601.46 478.2,-607.46 472.2,-613.46 466.2,-613.46"/>
+<text text-anchor="middle" x="428" y="-597.25" font-family="Noto Sans" font-size="11.00">validate stage</text>
+<text text-anchor="middle" x="428" y="-581.5" font-family="Noto Sans" font-size="11.00">schema + lint</text>
+<text text-anchor="middle" x="428" y="-565.75" font-family="Noto Sans" font-size="11.00">(green pipeline)</text>
+</g>
+<!-- qkb&#45;&gt;validate -->
+<g id="edge4" class="edge">
+<title>qkb&#45;&gt;validate</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M175.8,-663.79C186.2,-659.76 196.84,-655.78 207,-652.21 261.38,-633.12 324.37,-614.3 369.15,-601.47"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="369.62,-603.88 375.68,-599.61 368.28,-599.17 369.62,-603.88"/>
+</g>
+<!-- prompts&#45;&gt;validate -->
+<g id="edge5" class="edge">
+<title>prompts&#45;&gt;validate</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M310.5,-671.61C330.73,-656.71 358.33,-636.38 381.7,-619.17"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="383.04,-621.23 387.22,-615.11 380.13,-617.29 383.04,-621.23"/>
+</g>
+<!-- bases&#45;&gt;validate -->
+<g id="edge6" class="edge">
+<title>bases&#45;&gt;validate</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M428,-671.61C428,-657.69 428,-639.02 428,-622.59"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="430.45,-622.71 428,-615.71 425.55,-622.71 430.45,-622.71"/>
+</g>
+<!-- schema -->
+<g id="node5" class="node">
+<title>schema</title>
+<path fill="#fff9db" stroke="#b7950b" stroke-width="1.4" d="M628.71,-715.11C628.71,-715.11 525.29,-715.11 525.29,-715.11 519.29,-715.11 513.29,-709.11 513.29,-703.11 513.29,-703.11 513.29,-684.09 513.29,-684.09 513.29,-678.09 519.29,-672.09 525.29,-672.09 525.29,-672.09 628.71,-672.09 628.71,-672.09 634.71,-672.09 640.71,-678.09 640.71,-684.09 640.71,-684.09 640.71,-703.11 640.71,-703.11 640.71,-709.11 634.71,-715.11 628.71,-715.11"/>
+<text text-anchor="middle" x="577" y="-698.9" font-family="Noto Sans" font-size="11.00">qkb&#45;schema</text>
+<text text-anchor="middle" x="577" y="-683.15" font-family="Noto Sans" font-size="11.00">JSON schemas + tags</text>
+</g>
+<!-- schema&#45;&gt;validate -->
+<g id="edge7" class="edge">
+<title>schema&#45;&gt;validate</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M547.92,-671.61C527.27,-656.71 499.1,-636.38 475.25,-619.17"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="476.71,-617.2 469.6,-615.09 473.84,-621.18 476.71,-617.2"/>
+<text text-anchor="middle" x="524.97" y="-635.66" font-family="Noto Sans" font-size="9.00" fill="#5b6770">lint rules</text>
+</g>
+<!-- cci -->
+<g id="node6" class="node">
+<title>cci</title>
+<path fill="#fff9db" stroke="#b7950b" stroke-width="1.4" d="M762.46,-715.11C762.46,-715.11 681.54,-715.11 681.54,-715.11 675.54,-715.11 669.54,-709.11 669.54,-703.11 669.54,-703.11 669.54,-684.09 669.54,-684.09 669.54,-678.09 675.54,-672.09 681.54,-672.09 681.54,-672.09 762.46,-672.09 762.46,-672.09 768.46,-672.09 774.46,-678.09 774.46,-684.09 774.46,-684.09 774.46,-703.11 774.46,-703.11 774.46,-709.11 768.46,-715.11 762.46,-715.11"/>
+<text text-anchor="middle" x="722" y="-698.9" font-family="Noto Sans" font-size="11.00">fixbot&#45;content&#45;ci</text>
+<text text-anchor="middle" x="722" y="-683.15" font-family="Noto Sans" font-size="11.00">shared pipeline</text>
+</g>
+<!-- cci&#45;&gt;validate -->
+<g id="edge8" class="edge">
+<title>cci&#45;&gt;validate</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="1,5" d="M691.19,-671.78C680.11,-664.9 667.3,-657.63 655,-652.21 599.95,-627.96 533.63,-609.49 486.93,-598.12"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="487.74,-595.79 480.36,-596.54 486.59,-600.56 487.74,-595.79"/>
+<text text-anchor="middle" x="647.82" y="-635.66" font-family="Noto Sans" font-size="9.00" fill="#5b6770">pipeline</text>
+</g>
+<!-- rehearse -->
+<g id="node8" class="node">
+<title>rehearse</title>
+<path fill="#ffffff" stroke="#3e8e5a" stroke-width="1.4" stroke-dasharray="5,2" d="M756.46,-613.46C756.46,-613.46 573.54,-613.46 573.54,-613.46 567.54,-613.46 561.54,-607.46 561.54,-601.46 561.54,-601.46 561.54,-566.69 561.54,-566.69 561.54,-560.69 567.54,-554.69 573.54,-554.69 573.54,-554.69 756.46,-554.69 756.46,-554.69 762.46,-554.69 768.46,-560.69 768.46,-566.69 768.46,-566.69 768.46,-601.46 768.46,-601.46 768.46,-607.46 762.46,-613.46 756.46,-613.46"/>
+<text text-anchor="middle" x="665" y="-597.25" font-family="Noto Sans" font-size="11.00">rehearse stage (&#45;&#45;test)</text>
+<text text-anchor="middle" x="665" y="-581.5" font-family="Noto Sans" font-size="11.00">throwaway tree, no publish</text>
+<text text-anchor="middle" x="665" y="-565.75" font-family="Noto Sans" font-size="11.00">writes prefixed copies to test Course</text>
+</g>
+<!-- validate&#45;&gt;rehearse -->
+<g id="edge10" class="edge">
+<title>validate&#45;&gt;rehearse</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M478.55,-584.08C500.29,-584.08 526.64,-584.08 552.6,-584.08"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="552.41,-586.53 559.41,-584.08 552.41,-581.63 552.41,-586.53"/>
+<text text-anchor="middle" x="519.88" y="-591.28" font-family="Noto Sans" font-size="9.00" fill="#5b6770">optional gate</text>
+</g>
+<!-- sync -->
+<g id="node9" class="node">
+<title>sync</title>
+<path fill="#eaf2fb" stroke="#4a78b5" stroke-width="1.4" d="M535.33,-429.82C535.33,-429.82 396.67,-429.82 396.67,-429.82 390.67,-429.82 384.67,-423.82 384.67,-417.82 384.67,-417.82 384.67,-398.8 384.67,-398.8 384.67,-392.8 390.67,-386.8 396.67,-386.8 396.67,-386.8 535.33,-386.8 535.33,-386.8 541.33,-386.8 547.33,-392.8 547.33,-398.8 547.33,-398.8 547.33,-417.82 547.33,-417.82 547.33,-423.82 541.33,-429.82 535.33,-429.82"/>
+<text text-anchor="middle" x="466" y="-413.61" font-family="Noto Sans" font-size="11.00">POST /sync?wait=1</text>
+<text text-anchor="middle" x="466" y="-397.86" font-family="Noto Sans" font-size="11.00">single serialized wait queue</text>
+</g>
+<!-- validate&#45;&gt;sync -->
+<g id="edge9" class="edge">
+<title>validate&#45;&gt;sync</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M426.4,-554.63C426.13,-548.7 425.89,-542.5 425.75,-536.69 425.48,-525.36 423.63,-522.33 425.75,-511.19 430.64,-485.53 441.87,-458.07 451.23,-438.13"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="453.43,-439.22 454.25,-431.85 449.01,-437.09 453.43,-439.22"/>
+<text text-anchor="middle" x="461.38" y="-528.14" font-family="Noto Sans" font-size="9.00" fill="#5b6770">POST {repo, sha}</text>
+<text text-anchor="middle" x="461.38" y="-515.39" font-family="Noto Sans" font-size="9.00" fill="#5b6770">only if green</text>
+</g>
+<!-- rehearse&#45;&gt;sync -->
+<g id="edge11" class="edge">
+<title>rehearse&#45;&gt;sync</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="1,5" d="M561.15,-556.54C550.19,-551.09 539.77,-544.55 530.75,-536.69 500.74,-510.55 482.92,-467.16 473.79,-438.4"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="476.18,-437.84 471.81,-431.86 471.49,-439.27 476.18,-437.84"/>
+<text text-anchor="middle" x="564.88" y="-528.14" font-family="Noto Sans" font-size="9.00" fill="#5b6770">never advances</text>
+<text text-anchor="middle" x="564.88" y="-515.39" font-family="Noto Sans" font-size="9.00" fill="#5b6770">the green epoch</text>
+</g>
+<!-- clone -->
+<g id="node11" class="node">
+<title>clone</title>
+<path fill="#e8f5ec" stroke="#3e8e5a" stroke-width="1.4" d="M545.08,-259.92C545.08,-259.92 386.92,-259.92 386.92,-259.92 380.92,-259.92 374.92,-253.92 374.92,-247.92 374.92,-247.92 374.92,-197.4 374.92,-197.4 374.92,-191.4 380.92,-185.4 386.92,-185.4 386.92,-185.4 545.08,-185.4 545.08,-185.4 551.08,-185.4 557.08,-191.4 557.08,-197.4 557.08,-197.4 557.08,-247.92 557.08,-247.92 557.08,-253.92 551.08,-259.92 545.08,-259.92"/>
+<text text-anchor="middle" x="466" y="-243.71" font-family="Noto Sans" font-size="11.00">clone caller repo</text>
+<text text-anchor="middle" x="466" y="-227.96" font-family="Noto Sans" font-size="11.00">at exact pushed sha</text>
+<text text-anchor="middle" x="466" y="-212.21" font-family="Noto Sans" font-size="11.00">read&#45;only token, optional proxy</text>
+<text text-anchor="middle" x="466" y="-196.46" font-family="Noto Sans" font-size="11.00">(only around git fetch)</text>
+</g>
+<!-- sync&#45;&gt;clone -->
+<g id="edge12" class="edge">
+<title>sync&#45;&gt;clone</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M466,-386.6C466,-358.2 466,-306.42 466,-268.84"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="468.45,-269.06 466,-262.06 463.55,-269.06 468.45,-269.06"/>
+<text text-anchor="middle" x="502.38" y="-350.37" font-family="Noto Sans" font-size="9.00" fill="#5b6770">spawn Job</text>
+<text text-anchor="middle" x="502.38" y="-337.62" font-family="Noto Sans" font-size="9.00" fill="#5b6770">(sha&#45;bearing call)</text>
+</g>
+<!-- repos -->
+<g id="node10" class="node">
+<title>repos</title>
+<path fill="#eaf2fb" stroke="#4a78b5" stroke-width="1.4" d="M717.46,-437.69C717.46,-437.69 588.54,-437.69 588.54,-437.69 582.54,-437.69 576.54,-431.69 576.54,-425.69 576.54,-425.69 576.54,-390.92 576.54,-390.92 576.54,-384.92 582.54,-378.92 588.54,-378.92 588.54,-378.92 717.46,-378.92 717.46,-378.92 723.46,-378.92 729.46,-384.92 729.46,-390.92 729.46,-390.92 729.46,-425.69 729.46,-425.69 729.46,-431.69 723.46,-437.69 717.46,-437.69"/>
+<text text-anchor="middle" x="653" y="-421.48" font-family="Noto Sans" font-size="11.00">GET /repos</text>
+<text text-anchor="middle" x="653" y="-405.73" font-family="Noto Sans" font-size="11.00">per&#45;repo epoch HEADs</text>
+<text text-anchor="middle" x="653" y="-389.98" font-family="Noto Sans" font-size="11.00">(= volume green memory)</text>
+</g>
+<!-- publish -->
+<g id="node12" class="node">
+<title>publish</title>
+<path fill="#e8f5ec" stroke="#3e8e5a" stroke-width="1.4" d="M766.58,-252.05C766.58,-252.05 677.42,-252.05 677.42,-252.05 671.42,-252.05 665.42,-246.05 665.42,-240.05 665.42,-240.05 665.42,-205.28 665.42,-205.28 665.42,-199.28 671.42,-193.28 677.42,-193.28 677.42,-193.28 766.58,-193.28 766.58,-193.28 772.58,-193.28 778.58,-199.28 778.58,-205.28 778.58,-205.28 778.58,-240.05 778.58,-240.05 778.58,-246.05 772.58,-252.05 766.58,-252.05"/>
+<text text-anchor="middle" x="722" y="-235.84" font-family="Noto Sans" font-size="11.00">publish per&#45;file</text>
+<text text-anchor="middle" x="722" y="-220.09" font-family="Noto Sans" font-size="11.00">replace + prune</text>
+<text text-anchor="middle" x="722" y="-204.34" font-family="Noto Sans" font-size="11.00">files first, then .git</text>
+</g>
+<!-- clone&#45;&gt;publish -->
+<g id="edge13" class="edge">
+<title>clone&#45;&gt;publish</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M557.34,-222.66C590.01,-222.66 626.16,-222.66 656.25,-222.66"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="656.01,-225.11 663.01,-222.66 656.01,-220.21 656.01,-225.11"/>
+<text text-anchor="middle" x="611.25" y="-229.86" font-family="Noto Sans" font-size="9.00" fill="#5b6770">checkout exact sha</text>
+</g>
+<!-- cli -->
+<g id="node13" class="node">
+<title>cli</title>
+<path fill="#e8f5ec" stroke="#3e8e5a" stroke-width="1.4" d="M973.08,-252.05C973.08,-252.05 874.92,-252.05 874.92,-252.05 868.92,-252.05 862.92,-246.05 862.92,-240.05 862.92,-240.05 862.92,-205.28 862.92,-205.28 862.92,-199.28 868.92,-193.28 874.92,-193.28 874.92,-193.28 973.08,-193.28 973.08,-193.28 979.08,-193.28 985.08,-199.28 985.08,-205.28 985.08,-205.28 985.08,-240.05 985.08,-240.05 985.08,-246.05 979.08,-252.05 973.08,-252.05"/>
+<text text-anchor="middle" x="924" y="-235.84" font-family="Noto Sans" font-size="11.00">pipe_control CLI</text>
+<text text-anchor="middle" x="924" y="-220.09" font-family="Noto Sans" font-size="11.00">loader + &#45;&#45;only&#45;repo</text>
+<text text-anchor="middle" x="924" y="-204.34" font-family="Noto Sans" font-size="11.00">(&#45;v logs &#45;&gt; Loki)</text>
+</g>
+<!-- publish&#45;&gt;cli -->
+<g id="edge15" class="edge">
+<title>publish&#45;&gt;cli</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="1,5" d="M779.08,-222.66C802.25,-222.66 829.25,-222.66 853.62,-222.66"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="853.5,-225.11 860.5,-222.66 853.5,-220.21 853.5,-225.11"/>
+<text text-anchor="middle" x="820.75" y="-229.86" font-family="Noto Sans" font-size="9.00" fill="#5b6770">then runs CLI</text>
+</g>
+<!-- contentpvc -->
+<g id="node14" class="node">
+<title>contentpvc</title>
+<path fill="#f3eafb" stroke="#7b4fa6" stroke-width="1.4" d="M797.21,-73.78C797.21,-76.74 757.22,-79.15 708,-79.15 658.78,-79.15 618.79,-76.74 618.79,-73.78 618.79,-73.78 618.79,-25.38 618.79,-25.38 618.79,-22.41 658.78,-20 708,-20 757.22,-20 797.21,-22.41 797.21,-25.38 797.21,-25.38 797.21,-73.78 797.21,-73.78"/>
+<path fill="none" stroke="#7b4fa6" stroke-width="1.4" d="M797.21,-73.78C797.21,-70.81 757.22,-68.4 708,-68.4 658.78,-68.4 618.79,-70.81 618.79,-73.78"/>
+<text text-anchor="middle" x="708" y="-54.88" font-family="Noto Sans" font-size="11.00">Shared content PVC</text>
+<text text-anchor="middle" x="708" y="-39.13" font-family="Noto Sans" font-size="11.00">sys&#45;prompts / pipe&#45;bases / qkb</text>
+</g>
+<!-- publish&#45;&gt;contentpvc -->
+<g id="edge14" class="edge">
+<title>publish&#45;&gt;contentpvc</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M719.66,-193.03C717.3,-164.25 713.66,-119.74 711.07,-88.14"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="713.55,-88.33 710.53,-81.55 708.66,-88.73 713.55,-88.33"/>
+<text text-anchor="middle" x="764.32" y="-156.85" font-family="Noto Sans" font-size="9.00" fill="#5b6770">atomic per&#45;file replace</text>
+</g>
+<!-- statedb -->
+<g id="node15" class="node">
+<title>statedb</title>
+<path fill="#f3eafb" stroke="#7b4fa6" stroke-width="1.4" d="M1035.08,-73.78C1035.08,-76.74 1005.01,-79.15 968,-79.15 930.99,-79.15 900.92,-76.74 900.92,-73.78 900.92,-73.78 900.92,-25.38 900.92,-25.38 900.92,-22.41 930.99,-20 968,-20 1005.01,-20 1035.08,-22.41 1035.08,-25.38 1035.08,-25.38 1035.08,-73.78 1035.08,-73.78"/>
+<path fill="none" stroke="#7b4fa6" stroke-width="1.4" d="M1035.08,-73.78C1035.08,-70.81 1005.01,-68.4 968,-68.4 930.99,-68.4 900.92,-70.81 900.92,-73.78"/>
+<text text-anchor="middle" x="968" y="-54.88" font-family="Noto Sans" font-size="11.00">Pipe State DB</text>
+<text text-anchor="middle" x="968" y="-39.13" font-family="Noto Sans" font-size="11.00">Pipes, valves, sessions</text>
+</g>
+<!-- cli&#45;&gt;statedb -->
+<g id="edge16" class="edge">
+<title>cli&#45;&gt;statedb</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M920.44,-192.85C919.65,-180.37 919.73,-165.66 922.5,-152.65 927.34,-129.9 937.62,-106.08 947.19,-87.17"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="949.28,-88.47 950.33,-81.13 944.93,-86.22 949.28,-88.47"/>
+<text text-anchor="middle" x="965.25" y="-156.85" font-family="Noto Sans" font-size="9.00" fill="#5b6770">upsert Pipes / valves</text>
+</g>
+<!-- owui -->
+<g id="node16" class="node">
+<title>owui</title>
+<path fill="#e8f5ec" stroke="#3e8e5a" stroke-width="1.4" d="M1180.08,-71.09C1180.08,-71.09 1075.92,-71.09 1075.92,-71.09 1069.92,-71.09 1063.92,-65.09 1063.92,-59.09 1063.92,-59.09 1063.92,-40.07 1063.92,-40.07 1063.92,-34.07 1069.92,-28.07 1075.92,-28.07 1075.92,-28.07 1180.08,-28.07 1180.08,-28.07 1186.08,-28.07 1192.08,-34.07 1192.08,-40.07 1192.08,-40.07 1192.08,-59.09 1192.08,-59.09 1192.08,-65.09 1186.08,-71.09 1180.08,-71.09"/>
+<text text-anchor="middle" x="1128" y="-54.88" font-family="Noto Sans" font-size="11.00">Open WebUI</text>
+<text text-anchor="middle" x="1128" y="-39.13" font-family="Noto Sans" font-size="11.00">Pipes + model config</text>
+</g>
+<!-- cli&#45;&gt;owui -->
+<g id="edge17" class="edge">
+<title>cli&#45;&gt;owui</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M985.41,-213.97C1042.1,-205.46 1120.29,-189.64 1139,-165.4 1157.8,-141.05 1150.07,-104.57 1140.89,-79.29"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1143.27,-78.66 1138.46,-73.02 1138.7,-80.43 1143.27,-78.66"/>
+<text text-anchor="middle" x="1172.16" y="-156.85" font-family="Noto Sans" font-size="9.00" fill="#5b6770">model config</text>
+</g>
+<!-- contentpvc&#45;&gt;owui -->
+<g id="edge18" class="edge">
+<title>contentpvc&#45;&gt;owui</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M752.22,-79.54C786.09,-100.58 834.86,-126.92 882,-138.24 954.6,-155.68 981.97,-169.01 1050,-138.24 1076.79,-126.13 1098.04,-99.77 1111.55,-78.92"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1113.5,-80.43 1115.13,-73.19 1109.34,-77.83 1113.5,-80.43"/>
+<text text-anchor="middle" x="858" y="-156.85" font-family="Noto Sans" font-size="9.00" fill="#5b6770">subPath mount</text>
+</g>
+<!-- assets -->
+<g id="node17" class="node">
+<title>assets</title>
+<path fill="#e8f5ec" stroke="#3e8e5a" stroke-width="1.4" d="M1364.58,-71.09C1364.58,-71.09 1233.42,-71.09 1233.42,-71.09 1227.42,-71.09 1221.42,-65.09 1221.42,-59.09 1221.42,-59.09 1221.42,-40.07 1221.42,-40.07 1221.42,-34.07 1227.42,-28.07 1233.42,-28.07 1233.42,-28.07 1364.58,-28.07 1364.58,-28.07 1370.58,-28.07 1376.58,-34.07 1376.58,-40.07 1376.58,-40.07 1376.58,-59.09 1376.58,-59.09 1376.58,-65.09 1370.58,-71.09 1364.58,-71.09"/>
+<text text-anchor="middle" x="1299" y="-54.88" font-family="Noto Sans" font-size="11.00">/qkb&#45;assets/&lt;token&gt;/&lt;file&gt;</text>
+<text text-anchor="middle" x="1299" y="-39.13" font-family="Noto Sans" font-size="11.00">inline question figures</text>
+</g>
+<!-- contentpvc&#45;&gt;assets -->
+<g id="edge19" class="edge">
+<title>contentpvc&#45;&gt;assets</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M752.22,-79.54C786.09,-100.58 834.86,-126.92 882,-138.24 952.23,-155.11 1140.02,-165.27 1207,-138.24 1236.94,-126.16 1262.58,-99.16 1279.12,-78.1"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1280.88,-79.84 1283.18,-72.79 1276.99,-76.86 1280.88,-79.84"/>
+<text text-anchor="middle" x="1076" y="-156.85" font-family="Noto Sans" font-size="9.00" fill="#5b6770">Pipe Control serves from tree</text>
+</g>
+<!-- reconcile -->
+<g id="node18" class="node">
+<title>reconcile</title>
+<path fill="#ffffff" stroke="#4a78b5" stroke-width="1.4" stroke-dasharray="5,2" d="M915.33,-437.69C915.33,-437.69 770.67,-437.69 770.67,-437.69 764.67,-437.69 758.67,-431.69 758.67,-425.69 758.67,-425.69 758.67,-390.92 758.67,-390.92 758.67,-384.92 764.67,-378.92 770.67,-378.92 770.67,-378.92 915.33,-378.92 915.33,-378.92 921.33,-378.92 927.33,-384.92 927.33,-390.92 927.33,-390.92 927.33,-425.69 927.33,-425.69 927.33,-431.69 921.33,-437.69 915.33,-437.69"/>
+<text text-anchor="middle" x="843" y="-421.48" font-family="Noto Sans" font-size="11.00">content&#45;reconcile CronJob</text>
+<text text-anchor="middle" x="843" y="-405.73" font-family="Noto Sans" font-size="11.00">every 5 min, scope=full</text>
+<text text-anchor="middle" x="843" y="-389.98" font-family="Noto Sans" font-size="11.00">deploy&#45;only: never re&#45;fetches</text>
+</g>
+<!-- reconcile&#45;&gt;sync -->
+<g id="edge20" class="edge">
+<title>reconcile&#45;&gt;sync</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="1,5" d="M824.37,-438.01C804.81,-465.36 771.17,-502.58 729.88,-508.5 689.53,-514.29 594.6,-518.93 562,-503.19 530.96,-488.21 503.9,-459.12 486.49,-437.08"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="488.6,-435.81 482.39,-431.76 484.72,-438.8 488.6,-435.81"/>
+<text text-anchor="middle" x="668" y="-528.14" font-family="Noto Sans" font-size="9.00" fill="#5b6770">sha&#45;less &#45;&gt; DEPLOY&#45;ONLY</text>
+<text text-anchor="middle" x="668" y="-515.39" font-family="Noto Sans" font-size="9.00" fill="#5b6770">converge to published HEADs</text>
+</g>
+</g>
+
+    </svg>
+  </g>
+  <g id="panel-D">
+    <rect x="1540.2" y="1074.8" width="644.8" height="340.4" rx="10"
+          fill="#FFFFFF" stroke="#D8DEE6" stroke-width="1.5"/>
+    <circle cx="1558.2" cy="1092.8" r="9" fill="#1F2933"/>
+    <text x="1558.2" y="1096.8" text-anchor="middle"
+          font-family="Noto Sans" font-size="10" font-weight="700" fill="#FFFFFF">D</text>
+    <svg x="1540.2" y="1074.8" width="644.8" height="340.4"
+         viewBox="0.00 0.00 1515.70 800.16" preserveAspectRatio="xMidYMid meet">
+
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(25.2 774.96)">
+<title>data_observability</title>
+<polygon fill="#ffffff" stroke="none" points="-25.2,25.2 -25.2,-774.96 1490.5,-774.96 1490.5,25.2 -25.2,25.2"/>
+<text text-anchor="middle" x="732.65" y="-724.86" font-family="Noto Sans" font-size="22.00" fill="#1f2933">Data protection and observability</text>
+<text text-anchor="middle" x="732.65" y="-694.11" font-family="Noto Sans" font-size="22.00" fill="#1f2933">(backups, interim safety net, metrics and logs)</text>
+<g id="clust1" class="cluster">
+<title>cluster_data</title>
+<path fill="#ffffff" stroke="#b5485d" d="M135.62,-82.26C135.62,-82.26 1445.3,-82.26 1445.3,-82.26 1451.3,-82.26 1457.3,-88.26 1457.3,-94.26 1457.3,-94.26 1457.3,-387.26 1457.3,-387.26 1457.3,-393.26 1451.3,-399.26 1445.3,-399.26 1445.3,-399.26 135.62,-399.26 135.62,-399.26 129.62,-399.26 123.62,-393.26 123.62,-387.26 123.62,-387.26 123.62,-94.26 123.62,-94.26 123.62,-88.26 129.62,-82.26 135.62,-82.26"/>
+<text text-anchor="middle" x="790.46" y="-382.91" font-family="Noto Sans" font-size="13.00" fill="#b5485d">Database backups</text>
+</g>
+<g id="clust2" class="cluster">
+<title>cluster_obs</title>
+<path fill="#ffffff" stroke="#4a78b5" d="M151,-407.26C151,-407.26 1419.42,-407.26 1419.42,-407.26 1425.42,-407.26 1431.42,-413.26 1431.42,-419.26 1431.42,-419.26 1431.42,-660.26 1431.42,-660.26 1431.42,-666.26 1425.42,-672.26 1419.42,-672.26 1419.42,-672.26 151,-672.26 151,-672.26 145,-672.26 139,-666.26 139,-660.26 139,-660.26 139,-419.26 139,-419.26 139,-413.26 145,-407.26 151,-407.26"/>
+<text text-anchor="middle" x="785.21" y="-655.91" font-family="Noto Sans" font-size="13.00" fill="#4a78b5">Self&#45;hosted monitoring</text>
+</g>
+<!-- owuidb -->
+<g id="node1" class="node">
+<title>owuidb</title>
+<path fill="#f3eafb" stroke="#7b4fa6" stroke-width="1.4" d="M665.57,-262.46C665.57,-265.43 642.23,-267.84 613.49,-267.84 584.75,-267.84 561.41,-265.43 561.41,-262.46 561.41,-262.46 561.41,-214.06 561.41,-214.06 561.41,-211.09 584.75,-208.68 613.49,-208.68 642.23,-208.68 665.57,-211.09 665.57,-214.06 665.57,-214.06 665.57,-262.46 665.57,-262.46"/>
+<path fill="none" stroke="#7b4fa6" stroke-width="1.4" d="M665.57,-262.46C665.57,-259.49 642.23,-257.08 613.49,-257.08 584.75,-257.08 561.41,-259.49 561.41,-262.46"/>
+<text text-anchor="middle" x="613.49" y="-243.56" font-family="Noto Sans" font-size="11.00">Open WebUI DB</text>
+<text text-anchor="middle" x="613.49" y="-227.81" font-family="Noto Sans" font-size="11.00">CNPG Postgres</text>
+</g>
+<!-- barman -->
+<g id="node3" class="node">
+<title>barman</title>
+<path fill="#eaf2fb" stroke="#4a78b5" stroke-width="1.4" d="M1064.89,-294.64C1064.89,-294.64 918.73,-294.64 918.73,-294.64 912.73,-294.64 906.73,-288.64 906.73,-282.64 906.73,-282.64 906.73,-247.88 906.73,-247.88 906.73,-241.88 912.73,-235.88 918.73,-235.88 918.73,-235.88 1064.89,-235.88 1064.89,-235.88 1070.89,-235.88 1076.89,-241.88 1076.89,-247.88 1076.89,-247.88 1076.89,-282.64 1076.89,-282.64 1076.89,-288.64 1070.89,-294.64 1064.89,-294.64"/>
+<text text-anchor="middle" x="991.81" y="-278.44" font-family="Noto Sans" font-size="11.00">Barman Cloud Plugin</text>
+<text text-anchor="middle" x="991.81" y="-262.69" font-family="Noto Sans" font-size="11.00">continuous WAL + weekly full</text>
+<text text-anchor="middle" x="991.81" y="-246.94" font-family="Noto Sans" font-size="11.00">(backup.enabled = true)</text>
+</g>
+<!-- owuidb&#45;&gt;barman -->
+<g id="edge1" class="edge">
+<title>owuidb&#45;&gt;barman</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M666.03,-241.96C725.51,-246.23 824.51,-253.33 897.6,-258.57"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="897.26,-261 904.42,-259.06 897.62,-256.12 897.26,-261"/>
+<text text-anchor="middle" x="791.77" y="-261.48" font-family="Noto Sans" font-size="9.00" fill="#5b6770">WAL + base</text>
+</g>
+<!-- statedb -->
+<g id="node2" class="node">
+<title>statedb</title>
+<path fill="#f3eafb" stroke="#7b4fa6" stroke-width="1.4" d="M662.57,-353.46C662.57,-356.43 640.57,-358.84 613.49,-358.84 586.41,-358.84 564.41,-356.43 564.41,-353.46 564.41,-353.46 564.41,-305.06 564.41,-305.06 564.41,-302.09 586.41,-299.68 613.49,-299.68 640.57,-299.68 662.57,-302.09 662.57,-305.06 662.57,-305.06 662.57,-353.46 662.57,-353.46"/>
+<path fill="none" stroke="#7b4fa6" stroke-width="1.4" d="M662.57,-353.46C662.57,-350.49 640.57,-348.08 613.49,-348.08 586.41,-348.08 564.41,-350.49 564.41,-353.46"/>
+<text text-anchor="middle" x="613.49" y="-334.56" font-family="Noto Sans" font-size="11.00">Pipe State DB</text>
+<text text-anchor="middle" x="613.49" y="-318.81" font-family="Noto Sans" font-size="11.00">CNPG Postgres</text>
+</g>
+<!-- statedb&#45;&gt;barman -->
+<g id="edge2" class="edge">
+<title>statedb&#45;&gt;barman</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M662.92,-321.02C722.08,-310.96 823.46,-293.72 897.86,-281.07"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="897.91,-283.54 904.4,-279.96 897.09,-278.71 897.91,-283.54"/>
+<text text-anchor="middle" x="791.77" y="-317.99" font-family="Noto Sans" font-size="9.00" fill="#5b6770">WAL + base</text>
+</g>
+<!-- pgbucket -->
+<g id="node4" class="node">
+<title>pgbucket</title>
+<path fill="#fdecef" stroke="#b5485d" stroke-width="1.4" d="M1437.67,-231.46C1437.67,-234.43 1388.11,-236.84 1327.1,-236.84 1266.08,-236.84 1216.52,-234.43 1216.52,-231.46 1216.52,-231.46 1216.52,-183.06 1216.52,-183.06 1216.52,-180.09 1266.08,-177.68 1327.1,-177.68 1388.11,-177.68 1437.67,-180.09 1437.67,-183.06 1437.67,-183.06 1437.67,-231.46 1437.67,-231.46"/>
+<path fill="none" stroke="#b5485d" stroke-width="1.4" d="M1437.67,-231.46C1437.67,-228.49 1388.11,-226.08 1327.1,-226.08 1266.08,-226.08 1216.52,-228.49 1216.52,-231.46"/>
+<text text-anchor="middle" x="1327.1" y="-212.56" font-family="Noto Sans" font-size="11.00">s3://example&#45;fixbot&#45;pg&#45;backups/&lt;slug&gt;</text>
+<text text-anchor="middle" x="1327.1" y="-196.81" font-family="Noto Sans" font-size="11.00">Open WebUI DB archive</text>
+</g>
+<!-- barman&#45;&gt;pgbucket -->
+<g id="edge3" class="edge">
+<title>barman&#45;&gt;pgbucket</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M1077.34,-250.55C1116.76,-243.69 1164.36,-235.41 1207.32,-227.93"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1207.71,-230.35 1214.19,-226.73 1206.87,-225.52 1207.71,-230.35"/>
+<text text-anchor="middle" x="1143.89" y="-249.04" font-family="Noto Sans" font-size="9.00" fill="#5b6770">Open WebUI DB</text>
+</g>
+<!-- statebucket -->
+<g id="node5" class="node">
+<title>statebucket</title>
+<path fill="#fdecef" stroke="#b5485d" stroke-width="1.4" d="M1443.3,-342.32C1443.3,-346.37 1391.22,-349.66 1327.1,-349.66 1262.97,-349.66 1210.89,-346.37 1210.89,-342.32 1210.89,-342.32 1210.89,-276.2 1210.89,-276.2 1210.89,-272.15 1262.97,-268.86 1327.1,-268.86 1391.22,-268.86 1443.3,-272.15 1443.3,-276.2 1443.3,-276.2 1443.3,-342.32 1443.3,-342.32"/>
+<path fill="none" stroke="#b5485d" stroke-width="1.4" d="M1443.3,-342.32C1443.3,-338.26 1391.22,-334.97 1327.1,-334.97 1262.97,-334.97 1210.89,-338.26 1210.89,-342.32"/>
+<text text-anchor="middle" x="1327.1" y="-322.44" font-family="Noto Sans" font-size="11.00">s3://example&#45;fixbot&#45;state&#45;backups/&lt;slug&gt;</text>
+<text text-anchor="middle" x="1327.1" y="-306.69" font-family="Noto Sans" font-size="11.00">Pipe State DB archive</text>
+<text text-anchor="middle" x="1327.1" y="-290.94" font-family="Noto Sans" font-size="11.00">(semester&#45;end retention)</text>
+</g>
+<!-- barman&#45;&gt;statebucket -->
+<g id="edge4" class="edge">
+<title>barman&#45;&gt;statebucket</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M1077.34,-276.42C1115.06,-281.4 1160.26,-287.37 1201.73,-292.84"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1201.3,-295.26 1208.56,-293.74 1201.94,-290.4 1201.3,-295.26"/>
+<text text-anchor="middle" x="1143.89" y="-294.09" font-family="Noto Sans" font-size="9.00" fill="#5b6770">Pipe State DB</text>
+</g>
+<!-- dumpjob -->
+<g id="node6" class="node">
+<title>dumpjob</title>
+<path fill="#fdecef" stroke="#b5485d" stroke-width="1.4" d="M298.03,-267.64C298.03,-267.64 149.62,-267.64 149.62,-267.64 143.62,-267.64 137.62,-261.64 137.62,-255.64 137.62,-255.64 137.62,-220.88 137.62,-220.88 137.62,-214.88 143.62,-208.88 149.62,-208.88 149.62,-208.88 298.03,-208.88 298.03,-208.88 304.03,-208.88 310.03,-214.88 310.03,-220.88 310.03,-220.88 310.03,-255.64 310.03,-255.64 310.03,-261.64 304.03,-267.64 298.03,-267.64"/>
+<text text-anchor="middle" x="223.83" y="-251.44" font-family="Noto Sans" font-size="11.00">Interim pg_dump CronJob</text>
+<text text-anchor="middle" x="223.83" y="-235.69" font-family="Noto Sans" font-size="11.00">daily 03:15 UTC</text>
+<text text-anchor="middle" x="223.83" y="-219.94" font-family="Noto Sans" font-size="11.00">own NetworkPolicy exception</text>
+</g>
+<!-- dumpjob&#45;&gt;owuidb -->
+<g id="edge5" class="edge">
+<title>dumpjob&#45;&gt;owuidb</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="1,5" d="M310.38,-238.26C383.64,-238.26 487.28,-238.26 552.14,-238.26"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="552.06,-240.71 559.06,-238.26 552.06,-235.81 552.06,-240.71"/>
+<text text-anchor="middle" x="498.91" y="-242.46" font-family="Noto Sans" font-size="9.00" fill="#5b6770">pg_dump &#45;Fc</text>
+</g>
+<!-- dumpjob&#45;&gt;statedb -->
+<g id="edge6" class="edge">
+<title>dumpjob&#45;&gt;statedb</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="1,5" d="M310.38,-258.34C384.96,-275.85 491.03,-300.75 555.62,-315.91"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="554.77,-318.23 562.15,-317.44 555.89,-313.46 554.77,-318.23"/>
+<text text-anchor="middle" x="498.91" y="-311.47" font-family="Noto Sans" font-size="9.00" fill="#5b6770">pg_dump &#45;Fc</text>
+</g>
+<!-- dumppvc -->
+<g id="node7" class="node">
+<title>dumppvc</title>
+<path fill="#fdecef" stroke="#b5485d" stroke-width="1.4" d="M676.82,-169.32C676.82,-173.37 648.43,-176.66 613.49,-176.66 578.55,-176.66 550.16,-173.37 550.16,-169.32 550.16,-169.32 550.16,-103.2 550.16,-103.2 550.16,-99.15 578.55,-95.86 613.49,-95.86 648.43,-95.86 676.82,-99.15 676.82,-103.2 676.82,-103.2 676.82,-169.32 676.82,-169.32"/>
+<path fill="none" stroke="#b5485d" stroke-width="1.4" d="M676.82,-169.32C676.82,-165.26 648.43,-161.97 613.49,-161.97 578.55,-161.97 550.16,-165.26 550.16,-169.32"/>
+<text text-anchor="middle" x="613.49" y="-149.44" font-family="Noto Sans" font-size="11.00">nfs&#45;csi&#45;backup PVC</text>
+<text text-anchor="middle" x="613.49" y="-133.69" font-family="Noto Sans" font-size="11.00">14&#45;day retention</text>
+<text text-anchor="middle" x="613.49" y="-117.93" font-family="Noto Sans" font-size="11.00">(db&#45;dump safety net)</text>
+</g>
+<!-- dumpjob&#45;&gt;dumppvc -->
+<g id="edge7" class="edge">
+<title>dumpjob&#45;&gt;dumppvc</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M310.38,-215.75C379.63,-197.53 476.02,-172.17 541.15,-155.03"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="541.68,-157.43 547.83,-153.27 540.43,-152.69 541.68,-157.43"/>
+<text text-anchor="middle" x="498.91" y="-176.36" font-family="Noto Sans" font-size="9.00" fill="#5b6770">writes</text>
+</g>
+<!-- workloads -->
+<g id="node8" class="node">
+<title>workloads</title>
+<path fill="#e8f5ec" stroke="#3e8e5a" stroke-width="1.4" d="M282.66,-550.77C282.66,-550.77 165,-550.77 165,-550.77 159,-550.77 153,-544.77 153,-538.77 153,-538.77 153,-519.75 153,-519.75 153,-513.75 159,-507.75 165,-507.75 165,-507.75 282.66,-507.75 282.66,-507.75 288.66,-507.75 294.66,-513.75 294.66,-519.75 294.66,-519.75 294.66,-538.77 294.66,-538.77 294.66,-544.77 288.66,-550.77 282.66,-550.77"/>
+<text text-anchor="middle" x="223.83" y="-534.56" font-family="Noto Sans" font-size="11.00">Pods and Services</text>
+<text text-anchor="middle" x="223.83" y="-518.81" font-family="Noto Sans" font-size="11.00">webui / site / DBs / Jobs</text>
+</g>
+<!-- prometheus -->
+<g id="node9" class="node">
+<title>prometheus</title>
+<path fill="#eaf2fb" stroke="#4a78b5" stroke-width="1.4" d="M869.73,-498.77C869.73,-498.77 713.82,-498.77 713.82,-498.77 707.82,-498.77 701.82,-492.77 701.82,-486.77 701.82,-486.77 701.82,-467.75 701.82,-467.75 701.82,-461.75 707.82,-455.75 713.82,-455.75 713.82,-455.75 869.73,-455.75 869.73,-455.75 875.73,-455.75 881.73,-461.75 881.73,-467.75 881.73,-467.75 881.73,-486.77 881.73,-486.77 881.73,-492.77 875.73,-498.77 869.73,-498.77"/>
+<text text-anchor="middle" x="791.77" y="-482.56" font-family="Noto Sans" font-size="11.00">Prometheus</text>
+<text text-anchor="middle" x="791.77" y="-466.81" font-family="Noto Sans" font-size="11.00">scrapes app + platform metrics</text>
+</g>
+<!-- workloads&#45;&gt;prometheus -->
+<g id="edge8" class="edge">
+<title>workloads&#45;&gt;prometheus</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M295.08,-522.81C395.19,-513.61 579.32,-496.69 692.8,-486.26"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="692.81,-488.72 699.56,-485.64 692.36,-483.84 692.81,-488.72"/>
+<text text-anchor="middle" x="498.91" y="-509.69" font-family="Noto Sans" font-size="9.00" fill="#5b6770">metrics</text>
+</g>
+<!-- promtail -->
+<g id="node12" class="node">
+<title>promtail</title>
+<path fill="#eaf2fb" stroke="#4a78b5" stroke-width="1.4" d="M658.45,-580.77C658.45,-580.77 568.53,-580.77 568.53,-580.77 562.53,-580.77 556.53,-574.77 556.53,-568.77 556.53,-568.77 556.53,-549.75 556.53,-549.75 556.53,-543.75 562.53,-537.75 568.53,-537.75 568.53,-537.75 658.45,-537.75 658.45,-537.75 664.45,-537.75 670.45,-543.75 670.45,-549.75 670.45,-549.75 670.45,-568.77 670.45,-568.77 670.45,-574.77 664.45,-580.77 658.45,-580.77"/>
+<text text-anchor="middle" x="613.49" y="-564.56" font-family="Noto Sans" font-size="11.00">promtail + logsink</text>
+<text text-anchor="middle" x="613.49" y="-548.81" font-family="Noto Sans" font-size="11.00">pod logs</text>
+</g>
+<!-- workloads&#45;&gt;promtail -->
+<g id="edge9" class="edge">
+<title>workloads&#45;&gt;promtail</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M295.03,-534.69C366.91,-540.25 477.7,-548.83 547.59,-554.24"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="547.19,-556.66 554.36,-554.76 547.57,-551.78 547.19,-556.66"/>
+<text text-anchor="middle" x="498.91" y="-556.21" font-family="Noto Sans" font-size="9.00" fill="#5b6770">stdout logs</text>
+</g>
+<!-- grafana -->
+<g id="node11" class="node">
+<title>grafana</title>
+<path fill="#eaf2fb" stroke="#4a78b5" stroke-width="1.4" d="M1381.8,-539.64C1381.8,-539.64 1272.39,-539.64 1272.39,-539.64 1266.39,-539.64 1260.39,-533.64 1260.39,-527.64 1260.39,-527.64 1260.39,-492.88 1260.39,-492.88 1260.39,-486.88 1266.39,-480.88 1272.39,-480.88 1272.39,-480.88 1381.8,-480.88 1381.8,-480.88 1387.8,-480.88 1393.8,-486.88 1393.8,-492.88 1393.8,-492.88 1393.8,-527.64 1393.8,-527.64 1393.8,-533.64 1387.8,-539.64 1381.8,-539.64"/>
+<text text-anchor="middle" x="1327.1" y="-523.43" font-family="Noto Sans" font-size="11.00">Grafana</text>
+<text text-anchor="middle" x="1327.1" y="-507.69" font-family="Noto Sans" font-size="11.00">monitoring.&lt;domain&gt;</text>
+<text text-anchor="middle" x="1327.1" y="-491.94" font-family="Noto Sans" font-size="11.00">OIDC login</text>
+</g>
+<!-- prometheus&#45;&gt;grafana -->
+<g id="edge10" class="edge">
+<title>prometheus&#45;&gt;grafana</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M882.01,-470.61C890.36,-470.16 898.7,-469.78 906.73,-469.51 982.31,-466.94 1001.51,-463.39 1076.89,-469.51 1135.94,-474.31 1202.09,-485.39 1251.39,-494.79"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1250.81,-497.18 1258.15,-496.1 1251.74,-492.37 1250.81,-497.18"/>
+<text text-anchor="middle" x="991.81" y="-473.71" font-family="Noto Sans" font-size="9.00" fill="#5b6770">datasource</text>
+</g>
+<!-- clusterprom -->
+<g id="node10" class="node">
+<title>clusterprom</title>
+<path fill="#fdecef" stroke="#b5485d" stroke-width="1.4" d="M1047.26,-556.64C1047.26,-556.64 936.35,-556.64 936.35,-556.64 930.35,-556.64 924.35,-550.64 924.35,-544.64 924.35,-544.64 924.35,-509.88 924.35,-509.88 924.35,-503.88 930.35,-497.88 936.35,-497.88 936.35,-497.88 1047.26,-497.88 1047.26,-497.88 1053.26,-497.88 1059.26,-503.88 1059.26,-509.88 1059.26,-509.88 1059.26,-544.64 1059.26,-544.64 1059.26,-550.64 1053.26,-556.64 1047.26,-556.64"/>
+<text text-anchor="middle" x="991.81" y="-540.43" font-family="Noto Sans" font-size="11.00">cluster&#45;prometheus</text>
+<text text-anchor="middle" x="991.81" y="-524.68" font-family="Noto Sans" font-size="11.00">cluster Prometheus</text>
+<text text-anchor="middle" x="991.81" y="-508.94" font-family="Noto Sans" font-size="11.00">(read&#45;only datasource)</text>
+</g>
+<!-- clusterprom&#45;&gt;grafana -->
+<g id="edge11" class="edge">
+<title>clusterprom&#45;&gt;grafana</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M1059.76,-513.19C1073.63,-510.82 1088.18,-508.74 1101.89,-507.51 1151.58,-503.05 1207.72,-503.74 1251.39,-505.55"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1251.16,-507.99 1258.26,-505.85 1251.38,-503.1 1251.16,-507.99"/>
+<text text-anchor="middle" x="1143.89" y="-511.71" font-family="Noto Sans" font-size="9.00" fill="#5b6770">infra + node metrics</text>
+</g>
+<!-- loki -->
+<g id="node13" class="node">
+<title>loki</title>
+<path fill="#eaf2fb" stroke="#4a78b5" stroke-width="1.4" d="M1061.14,-631.77C1061.14,-631.77 922.48,-631.77 922.48,-631.77 916.48,-631.77 910.48,-625.77 910.48,-619.77 910.48,-619.77 910.48,-600.75 910.48,-600.75 910.48,-594.75 916.48,-588.75 922.48,-588.75 922.48,-588.75 1061.14,-588.75 1061.14,-588.75 1067.14,-588.75 1073.14,-594.75 1073.14,-600.75 1073.14,-600.75 1073.14,-619.77 1073.14,-619.77 1073.14,-625.77 1067.14,-631.77 1061.14,-631.77"/>
+<text text-anchor="middle" x="991.81" y="-615.56" font-family="Noto Sans" font-size="11.00">Loki</text>
+<text text-anchor="middle" x="991.81" y="-599.81" font-family="Noto Sans" font-size="11.00">30&#45;day compactor retention</text>
+</g>
+<!-- promtail&#45;&gt;loki -->
+<g id="edge12" class="edge">
+<title>promtail&#45;&gt;loki</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M670.83,-566.9C731.81,-575.16 829.91,-588.45 901.44,-598.15"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="900.81,-600.53 908.07,-599.05 901.47,-595.68 900.81,-600.53"/>
+<text text-anchor="middle" x="791.77" y="-599.39" font-family="Noto Sans" font-size="9.00" fill="#5b6770">push logs</text>
+</g>
+<!-- loki&#45;&gt;grafana -->
+<g id="edge14" class="edge">
+<title>loki&#45;&gt;grafana</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" d="M1065.95,-588.31C1120.99,-571.8 1196.16,-549.25 1251.54,-532.63"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1252.02,-535.04 1258.02,-530.68 1250.62,-530.35 1252.02,-535.04"/>
+<text text-anchor="middle" x="1143.89" y="-579.26" font-family="Noto Sans" font-size="9.00" fill="#5b6770">logs datasource</text>
+</g>
+<!-- lokistore -->
+<g id="node14" class="node">
+<title>lokistore</title>
+<path fill="#fdecef" stroke="#b5485d" stroke-width="1.4" d="M1417.42,-626.46C1417.42,-629.43 1376.94,-631.84 1327.1,-631.84 1277.25,-631.84 1236.77,-629.43 1236.77,-626.46 1236.77,-626.46 1236.77,-578.06 1236.77,-578.06 1236.77,-575.09 1277.25,-572.68 1327.1,-572.68 1376.94,-572.68 1417.42,-575.09 1417.42,-578.06 1417.42,-578.06 1417.42,-626.46 1417.42,-626.46"/>
+<path fill="none" stroke="#b5485d" stroke-width="1.4" d="M1417.42,-626.46C1417.42,-623.49 1376.94,-621.08 1327.1,-621.08 1277.25,-621.08 1236.77,-623.49 1236.77,-626.46"/>
+<text text-anchor="middle" x="1327.1" y="-607.56" font-family="Noto Sans" font-size="11.00">Interim: filesystem PVC</text>
+<text text-anchor="middle" x="1327.1" y="-591.81" font-family="Noto Sans" font-size="11.00">Target: s3://example&#45;fixbot&#45;loki</text>
+</g>
+<!-- loki&#45;&gt;lokistore -->
+<g id="edge13" class="edge">
+<title>loki&#45;&gt;lokistore</title>
+<path fill="none" stroke="#5b6770" stroke-width="1.3" stroke-dasharray="5,2" d="M1073.49,-608.32C1119.92,-607.21 1178.62,-605.8 1227.74,-604.62"/>
+<polygon fill="#5b6770" stroke="#5b6770" stroke-width="1.3" points="1227.58,-607.08 1234.52,-604.46 1227.46,-602.18 1227.58,-607.08"/>
+<text text-anchor="middle" x="1143.89" y="-611.64" font-family="Noto Sans" font-size="9.00" fill="#5b6770">chunks</text>
+</g>
+<!-- retention -->
+<g id="node15" class="node">
+<title>retention</title>
+<polygon fill="#fff4e5" stroke="#e8a33d" stroke-width="1.4" points="441.66,-68.52 0,-68.52 0,0 447.66,0 447.66,-62.52 441.66,-68.52"/>
+<polyline fill="none" stroke="#e8a33d" stroke-width="1.4" points="441.66,-68.52 441.66,-62.52"/>
+<polyline fill="none" stroke="#e8a33d" stroke-width="1.4" points="447.66,-62.52 441.66,-62.52"/>
+<text text-anchor="middle" x="223.83" y="-53.26" font-family="Noto Sans" font-size="10.00">Backup semantics</text>
+<text text-anchor="middle" x="223.83" y="-39.01" font-family="Noto Sans" font-size="10.00">&#45; CNPG backups are the primary recovery path.</text>
+<text text-anchor="middle" x="223.83" y="-24.76" font-family="Noto Sans" font-size="10.00">&#45; Interim dump exists only while the S3 store is degraded.</text>
+<text text-anchor="middle" x="223.83" y="-10.51" font-family="Noto Sans" font-size="10.00">&#45; Removing a Course stops pruning: the last State DB backup persists (semester&#45;end archive).</text>
+</g>
+<!-- retention&#45;&gt;dumppvc -->
+</g>
+
+    </svg>
+  </g>
+
+  <line x1="60" y1="1500" x2="2185" y2="1500"
+        stroke="#D8DEE6" stroke-width="1"/>
+  <text x="60" y="1518" font-family="Noto Sans" font-size="13"
+        font-weight="700" fill="#7B8794">LEGEND</text>
+  <line x1="60" y1="1528" x2="94" y2="1528" stroke="#5B6770" stroke-width="2.2"/>
+<text x="104" y="1533" font-family="Noto Sans" font-size="17" fill="#5B6770">request / data flow</text>
+<line x1="328.6" y1="1528" x2="362.6" y2="1528" stroke="#5B6770" stroke-width="2.2" stroke-dasharray="6 4"/>
+<text x="372.6" y="1533" font-family="Noto Sans" font-size="17" fill="#5B6770">optional or backup path</text>
+<line x1="634.8000000000001" y1="1528" x2="668.8000000000001" y2="1528" stroke="#5B6770" stroke-width="2.2" stroke-dasharray="2 4"/>
+<text x="678.8000000000001" y="1533" font-family="Noto Sans" font-size="17" fill="#5B6770">reconciliation / control</text>
+<path d="M 950.4000000000001 1523 L 950.4000000000001 1532 A 17 6 0 0 0 984.4000000000001 1532 L 984.4000000000001 1523 Z" fill="#F3EAFB" stroke="#7B4FA6" stroke-width="1.8"/><ellipse cx="967.4000000000001" cy="1523" rx="17" ry="6" fill="#F3EAFB" stroke="#7B4FA6" stroke-width="1.8"/>
+<text x="994.4000000000001" y="1533" font-family="Noto Sans" font-size="17" fill="#5B6770">database or persistent storage</text>
+  <text x="2185" y="1560" text-anchor="end"
+        font-family="Noto Sans" font-size="14" fill="#7B8794">
+    Generic logical view, not a live snapshot · regenerate: ./scripts/render-architecture.sh
+  </text>
+</svg>

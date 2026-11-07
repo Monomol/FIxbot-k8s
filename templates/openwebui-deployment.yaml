@@ -1,0 +1,472 @@
+{{- range $slug, $course := .Values.courses }}
+{{- $config := (include "fixbot.courseConfig" (dict "root" $ "slug" $slug "course" $course)) | fromYaml }}
+{{- $prefix := include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}
+{{- $kind := "Deployment" }}
+{{- if $config.ha }}{{- $kind = "StatefulSet" }}{{- end }}
+---
+apiVersion: apps/v1
+kind: {{ $kind }}
+metadata:
+  name: {{ $prefix }}-webui
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  replicas: {{ $config.openWebUI.replicas }}
+  {{- if $config.ha }}
+  # Ordered, identity-stable pods are needed so exactly ONE replica (pod-0)
+  # runs DB migrations before the others start. The shared RWX data volume is
+  # mounted via volumes (NOT volumeClaimTemplates) — no per-pod storage.
+  serviceName: {{ $prefix }}-webui
+  podManagementPolicy: OrderedReady
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: fixbot
+      fixbot.example.com/course: {{ $slug }}
+      fixbot.example.com/component: openwebui
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: fixbot
+        fixbot.example.com/course: {{ $slug }}
+        fixbot.example.com/component: openwebui
+      annotations:
+        {{- range $key, $value := $.Values.openWebUI.prometheusAnnotations }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+    spec:
+      # PodSecurity "restricted" requirements (Kubernetes Pod Security Standards)
+      securityContext:
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      {{- if $config.ha }}
+      initContainers:
+        # Multi-replica: run DB migrations on pod-0 only; every other replicas'
+        # main container boots with ENABLE_DB_MIGRATIONS=false. StatefulSet
+        # ordering guarantees pod-0's init finishes before pods 1..N are created.
+        - name: db-migrate
+          image: "{{ $.Values.openWebUI.image.repository }}:{{ $.Values.openWebUI.image.tag }}"
+          imagePullPolicy: {{ $.Values.openWebUI.image.pullPolicy }}
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          command:
+            - /bin/bash
+            - -c
+            - >-
+              set -euo pipefail;
+              POD="${POD_NAME##*-}";
+              if [ "$POD" = "0" ]; then
+                echo "pod-0: running Open WebUI DB migrations";
+                cd /app/backend/open_webui && python -m alembic -c alembic.ini upgrade head;
+              else
+                echo "pod ${POD}: DB migrations already handled by pod-0, skipping";
+              fi
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- include "fixbot.webuiDbEnv" (dict "prefix" $prefix) | nindent 12 }}
+            # HOME must be writable by the non-root user: libpq reads
+            # $HOME/.postgresql for a client cert and fails (Permission denied)
+            # against CNPG TLS when HOME is an unreadable /root.
+            - name: HOME
+              value: /tmp
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+        # Open WebUI constructs the Chroma HTTP client at import time and hard
+        # fails if it is unreachable, so every replica waits for the vector DB
+        # (and Redis) to be ready before the app process starts.
+        - name: wait-backends
+          image: "{{ $.Values.openWebUI.image.repository }}:{{ $.Values.openWebUI.image.tag }}"
+          imagePullPolicy: {{ $.Values.openWebUI.image.pullPolicy }}
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          command:
+            - python
+            - -c
+            - |
+              import os, time, urllib.request
+              import redis
+
+              host = os.getenv("CHROMA_HTTP_HOST")
+              port = os.getenv("CHROMA_HTTP_PORT", "8000")
+              url = f"http://{host}:{port}/api/v2/heartbeat"
+              rurl = os.getenv("REDIS_URL")
+              deadline = time.time() + 600
+              while time.time() < deadline:
+                  ok = True
+                  try:
+                      urllib.request.urlopen(url, timeout=3).read()
+                  except Exception:
+                      ok = False
+                  if ok and rurl:
+                      try:
+                          redis.Redis.from_url(rurl).ping()
+                      except Exception:
+                          ok = False
+                  if ok:
+                      print("vector DB and Redis ready")
+                      break
+                  time.sleep(2)
+              else:
+                  raise SystemExit("backends not ready in time")
+          env:
+            - name: REDIS_URL
+              value: "redis://{{ $prefix }}-redis.{{ $.Values.namespace }}.svc.cluster.local:6379"
+            - name: CHROMA_HTTP_HOST
+              value: "{{ $prefix }}-chroma-svc"
+            - name: CHROMA_HTTP_PORT
+              value: "8000"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+      {{- end }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ $prefix }}-data
+        {{- if $.Values.pipeControl.enabled }}
+        # Shared Pipe build files (system prompts, pipe bases, QKBs).
+        # Populated by the propagate Jobs; dir skeleton maintained by the
+        # pipe-control pod — webui subPath mounts stay valid even before the
+        # first sync.
+        - name: pipe-content
+          persistentVolumeClaim:
+            claimName: {{ include "fixbot.fullname" $ }}-pipe-content
+            readOnly: true
+        {{- end }}
+      containers:
+        - name: open-webui
+          image: "{{ $.Values.openWebUI.image.repository }}:{{ $.Values.openWebUI.image.tag }}"
+          imagePullPolicy: {{ $.Values.openWebUI.image.pullPolicy }}
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: {{ $.Values.openWebUI.servicePort }}
+              protocol: TCP
+          env:
+            # DB_* must precede DATABASE_URL — Kubernetes expands $(VAR)
+            # only from earlier entries in this list.
+            {{- include "fixbot.webuiDbEnv" (dict "prefix" $prefix) | nindent 12 }}
+            {{- if $config.stateDb.enabled }}
+            # Pipe State DB connection (ADR 0005). STATE_DB_* must precede
+            # FIXBOT_STATE_DB_URL (same $(VAR) expansion rule). Read by the
+            # FIxbot Pipe code persisting Pipe Sessions.
+            {{- include "fixbot.stateDbEnv" (dict "prefix" $prefix "database" $config.stateDb.database) | nindent 12 }}
+            {{- end }}
+            {{- if $config.ha }}
+            # Multi-replica prerequisites (auto-enabled because replicas > 1).
+            # One designated pod (pod-0's migration init) runs migrations.
+            - name: ENABLE_DB_MIGRATIONS
+              value: "false"
+            - name: REDIS_URL
+              value: "redis://{{ $prefix }}-redis.{{ $.Values.namespace }}.svc.cluster.local:6379"
+            - name: WEBSOCKET_MANAGER
+              value: "redis"
+            - name: ENABLE_WEBSOCKET_SUPPORT
+              value: "true"
+            - name: VECTOR_DB
+              value: "chroma"
+            - name: CHROMA_HTTP_HOST
+              value: "{{ $prefix }}-chroma-svc"
+            - name: CHROMA_HTTP_PORT
+              value: "8000"
+            # Database connection pool (per instance) + performance tuning, so
+            # multi-instance Courses don't exhaust Postgres or the 40-thread
+            # blocking-work ceiling. Sizes must stay under postgres.maxConnections.
+            - name: DATABASE_POOL_SIZE
+              value: {{ $.Values.openWebUI.poolSize | quote }}
+            - name: DATABASE_POOL_MAX_OVERFLOW
+              value: {{ $.Values.openWebUI.poolMaxOverflow | quote }}
+            - name: THREAD_POOL_SIZE
+              value: {{ $.Values.openWebUI.perf.threadPoolSize | quote }}
+            - name: DATABASE_USER_ACTIVE_STATUS_UPDATE_INTERVAL
+              value: {{ $.Values.openWebUI.perf.userActiveStatusUpdateInterval | quote }}
+            - name: ENABLE_ORJSON
+              value: {{ $.Values.openWebUI.perf.orjson | quote }}
+            - name: AIOHTTP_CLIENT_ASYNC_DNS_RESOLVER
+              value: {{ $.Values.openWebUI.perf.asyncDnsResolver | quote }}
+            - name: ENABLE_COMPRESSION_MIDDLEWARE
+              value: {{ not $.Values.openWebUI.perf.disableCompressionMiddleware | quote }}
+            {{- end }}
+            - name: WEBUI_URL
+              value: {{ $config.webuiUrl | quote }}
+            # On sign-out (OIDC logout) send the user back to the public site's
+            # root rather than leaving them on an Open WebUI auth screen.
+            - name: WEBUI_AUTH_SIGNOUT_REDIRECT_URL
+              value: {{ printf "https://%s" $.Values.domain | quote }}
+            # libpq needs a readable $HOME to avoid failing on a default client
+            # cert lookup during CNPG TLS (same reason as the migration init).
+            - name: HOME
+              value: /tmp
+            # Allow the provisioning Job to bootstrap its service account on a
+            # fresh (no users) DB even though the login form / SSO is on.
+            - name: ENABLE_INITIAL_ADMIN_SIGNUP
+              value: "true"
+            # Admin API keys must be enabled so the provisioning Job can mint
+            # the per-Course service-account key and manage users/settings.
+            - name: ENABLE_API_KEYS
+              value: "true"
+            # Public self-service signup (openWebUI.selfSignup), ALWAYS emitted
+            # so the declared state is authoritative at boot
+            # (ENABLE_PERSISTENT_CONFIG=false) — no reliance on the image
+            # default or OWUI's first-user auto-disable. OWUI auto-disables
+            # signup after the FIRST user (routers/auths.py), and the
+            # provisioning Job's bootstrap service account IS that first user,
+            # so the Job re-enables signup (REENABLE_SIGNUP) when this is true.
+            # SSO is unaffected (oauth.enable_signup is a separate key); a
+            # Course with the login form off (oidc.disablePasswordAuth) blocks
+            # form signup regardless.
+            - name: ENABLE_SIGNUP
+              value: {{ $config.openWebUI.selfSignup | quote }}
+            {{- if $config.provisioning.settings.defaultModels }}
+            - name: DEFAULT_MODELS
+              value: {{ $config.provisioning.settings.defaultModels | quote }}
+            {{- end }}
+            {{- if $config.provisioning.settings.defaultPinnedModels }}
+            - name: DEFAULT_PINNED_MODELS
+              value: {{ $config.provisioning.settings.defaultPinnedModels | quote }}
+            {{- end }}
+            - name: MODEL_ORDER_LIST
+              value: {{ $config.provisioning.settings.modelOrderList | toJson | quote }}
+            - name: DEFAULT_MODEL_METADATA
+              value: {{ $config.provisioning.settings.defaultModelMetadata | toJson | quote }}
+            - name: DEFAULT_MODEL_PARAMS
+              value: {{ $config.provisioning.settings.defaultModelParams | toJson | quote }}
+            # FIxbot Pipe integration key ("pbloky" backend), read by Pipe
+            # code. ALWAYS present so Pipes can getenv-with-default; the
+            # per-Course value lives in a hand-created Secret (Secrets policy)
+            # when the Course has the integration, empty string otherwise.
+            {{- $pblokySecret := dig "openWebUI" "pblokyKeySecretName" "" $course }}
+            {{- if $pblokySecret }}
+            - name: FIXBOT_PBLOKY_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $pblokySecret }}
+                  key: key
+            {{- else }}
+            - name: FIXBOT_PBLOKY_KEY
+              value: ""
+            {{- end }}
+            {{- if $config.aiass.enabled }}
+            {{- if and $config.aiass.apiKeySecretName (gt (int $config.aiass.keyPoolSize) 1) }}
+            # temporary-keypool (remove once AIaaS grants an unlimited key):
+            # N connections to the same endpoint, one per key, each pinned a
+            # numeric prefix_id -> every AIaaS model id on this Course becomes
+            # "0.<id>" … "<N-1>.<id>". OPENAI_API_CONFIGS is a JSON env read at
+            # boot (compatible with ENABLE_PERSISTENT_CONFIG=false); Pipe code
+            # reads FIXBOT_KEY_POOL_SIZE to enumerate the pool.
+            {{- $n := int $config.aiass.keyPoolSize }}
+            {{- $urls := list }}
+            {{- $configs := dict }}
+            {{- range $i := until $n }}
+            {{- $urls = append $urls $config.aiass.baseUrl }}
+            {{- $configs = set $configs (printf "%d" $i) (dict "enable" true "connection_type" "external" "model_ids" (list) "prefix_id" (printf "%d" $i)) }}
+            {{- end }}
+            - name: OPENAI_API_BASE_URLS
+              value: {{ join ";" $urls | quote }}
+            - name: OPENAI_API_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $config.aiass.apiKeySecretName }}
+                  key: api-keys
+            - name: OPENAI_API_CONFIGS
+              value: {{ $configs | toJson | quote }}
+            - name: FIXBOT_KEY_POOL_SIZE
+              value: {{ $config.aiass.keyPoolSize | quote }}
+            {{- else }}
+            {{- if $config.aiass.baseUrl }}
+            - name: OPENAI_API_BASE_URL
+              value: {{ $config.aiass.baseUrl | quote }}
+            {{- end }}
+            {{- if $config.aiass.apiKeySecretName }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $config.aiass.apiKeySecretName }}
+                  key: api-key
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if $config.oidc.enabled }}
+            - name: ENABLE_OAUTH_SIGNUP
+              value: "true"
+            - name: OPENID_PROVIDER_URL
+              value: {{ $config.oidc.providerUrl | quote }}
+            - name: OPENID_REDIRECT_URI
+              value: {{ printf "%s/oauth/oidc/callback" $config.webuiUrl | quote }}
+            - name: OAUTH_PROVIDER_NAME
+              value: {{ $config.oidc.providerName | quote }}
+            - name: OAUTH_AUTO_REDIRECT
+              value: {{ $config.oidc.autoRedirect | quote }}
+            - name: OAUTH_MERGE_ACCOUNTS_BY_EMAIL
+              value: {{ $config.oidc.mergeByEmail | quote }}
+            - name: OAUTH_CLIENT_ID
+              value: {{ $config.oidc.clientId | quote }}
+            - name: OAUTH_SCOPES
+              value: {{ $config.oidc.scopes | quote }}
+            - name: OAUTH_CODE_CHALLENGE_METHOD
+              value: {{ $config.oidc.codeChallengeMethod | quote }}
+            {{- if $config.oidc.clientSecretSecretName }}
+            - name: OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $config.oidc.clientSecretSecretName }}
+                  key: client-secret
+            {{- end }}
+            {{- if $config.oidc.disablePasswordAuth }}
+            - name: ENABLE_LOGIN_FORM
+              value: "false"
+            - name: ENABLE_PASSWORD_AUTH
+              value: "false"
+            {{- else }}
+            - name: ENABLE_LOGIN_FORM
+              value: "true"
+            - name: ENABLE_PASSWORD_AUTH
+              value: "true"
+            {{- end }}
+            {{- end }}
+            {{- with $.Values.webuiSettings }}
+            # --- FIxbot study-assistant settings (values.yaml webuiSettings) ---
+            # persistentConfig: false makes ALL env vars (incl. the ConfigVar
+            # ones below) authoritative at every boot; Admin-UI config changes
+            # are session-only.
+            - name: ENABLE_PERSISTENT_CONFIG
+              value: {{ .persistentConfig | quote }}
+            - name: WEBUI_NAME
+              value: {{ .webuiName | quote }}
+            - name: DEFAULT_USER_ROLE
+              value: {{ .defaultUserRole | quote }}
+            - name: PENDING_USER_OVERLAY_TITLE
+              value: {{ .pendingUserOverlayTitle | quote }}
+            - name: PENDING_USER_OVERLAY_CONTENT
+              value: {{ .pendingUserOverlayContent | quote }}
+            - name: DEFAULT_INTERFACE_SETTINGS
+              value: {{ .interfaceSettings | toJson | quote }}
+            - name: DEFAULT_PROMPT_SUGGESTIONS
+              value: {{ .promptSuggestions | toJson | quote }}
+            - name: ENABLE_TITLE_GENERATION
+              value: {{ .features.titleGeneration | quote }}
+            - name: ENABLE_TAGS_GENERATION
+              value: {{ .features.tagsGeneration | quote }}
+            - name: ENABLE_OLLAMA_API
+              value: {{ .features.ollamaApi | quote }}
+            - name: ENABLE_FOLLOW_UP_GENERATION
+              value: {{ .features.followUpGeneration | quote }}
+            - name: ENABLE_AUTOCOMPLETE_GENERATION
+              value: {{ .features.autocompleteGeneration | quote }}
+            - name: ENABLE_CODE_EXECUTION
+              value: {{ .features.codeExecution | quote }}
+            - name: ENABLE_CODE_INTERPRETER
+              value: {{ .features.codeInterpreter | quote }}
+            - name: ENABLE_EVALUATION_ARENA_MODELS
+              value: {{ .features.evaluationArenaModels | quote }}
+            - name: USER_PERMISSIONS_CHAT_CONTROLS
+              value: {{ .features.userChatControls | quote }}
+            - name: SHOW_ADMIN_DETAILS
+              value: {{ .showAdminDetails | quote }}
+            {{- range $suffix, $value := .features.userPermissions }}
+            - name: {{ printf "USER_PERMISSIONS_CHAT_%s" $suffix }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- if .baseModelsCache.enabled }}
+            - name: ENABLE_BASE_MODELS_CACHE
+              value: "true"
+            - name: MODELS_CACHE_TTL
+              value: {{ .baseModelsCache.ttl | quote }}
+            {{- end }}
+            - name: DATABASE_POOL_RECYCLE
+              value: {{ .databasePoolRecycle | quote }}
+            {{- if .corsPerCourseOrigin }}
+            - name: CORS_ALLOW_ORIGIN
+              value: {{ $config.webuiUrl | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if $.Values.pipeControl.enabled }}
+            # Pipe build files (read-only mounts of the shared
+            # fixbot-pipe-content volume; see templates/pipe-control.yaml).
+            # The webui sees global dirs in full but only its OWN QKB repo,
+            # mounted flat at FIXBOT_QKB_PATH.
+            - name: FIXBOT_SYS_PROMPTS_PATH
+              value: "/fixbot/sys-prompts"
+            - name: FIXBOT_PIPE_BASE_PATH
+              value: "/fixbot/pipe-bases"
+            - name: FIXBOT_QKB_PATH
+              value: "/fixbot/qkb"
+            {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /app/backend/data
+            {{- if $.Values.pipeControl.enabled }}
+            - name: pipe-content
+              mountPath: /fixbot/sys-prompts
+              subPath: sys-prompts
+              readOnly: true
+            - name: pipe-content
+              mountPath: /fixbot/pipe-bases
+              subPath: pipe-bases
+              readOnly: true
+            - name: pipe-content
+              mountPath: /fixbot/qkb
+              subPath: qkb/{{ $config.qkb.repo }}
+              readOnly: true
+            {{- end }}
+          resources:
+            {{- toYaml $config.openWebUI.resources | nindent 12 }}
+          livenessProbe:
+            {{- toYaml $.Values.openWebUI.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml $.Values.openWebUI.readinessProbe | nindent 12 }}
+{{- if $config.ha }}
+---
+# Headless Service required by the StatefulSet (serviceName). The existing
+# <prefix>-svc ClusterIP Service still load-balances into the webui pods.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $prefix }}-webui
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  clusterIP: None
+  ports:
+    - name: http
+      port: {{ $.Values.openWebUI.servicePort }}
+      targetPort: {{ $.Values.openWebUI.servicePort }}
+      protocol: TCP
+  selector:
+    app.kubernetes.io/part-of: fixbot
+    fixbot.example.com/course: {{ $slug }}
+    fixbot.example.com/component: openwebui
+{{- end }}
+{{- end }}

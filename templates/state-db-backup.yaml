@@ -1,0 +1,59 @@
+{{- range $slug, $course := .Values.courses }}
+{{- $config := (include "fixbot.courseConfig" (dict "root" $ "slug" $slug "course" $course)) | fromYaml }}
+{{- if and $config.stateDb.enabled $config.stateDb.backup.enabled }}
+{{- $prefix := include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}
+{{- $sdBackup := $.Values.stateDb.backup }}
+---
+# Barman Cloud Plugin ObjectStore for the Pipe State DB (ADR 0005). Dedicated
+# bucket (fixbot-state-backups) + dedicated S3 identity — transcript/exam data
+# is too valuable to share a failure domain with the Open WebUI DB backups.
+# Semester-end note: tearing a Course down removes this ObjectStore + the
+# ScheduledBackup, so nothing prunes the bucket anymore — the last backup +
+# WALs persist indefinitely.
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: {{ $prefix }}-state-backup-store
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  configuration:
+    destinationPath: {{ printf "%s/%s" $sdBackup.destinationPath $slug | quote }}
+    endpointURL: {{ $sdBackup.endpointURL | quote }}
+    s3Credentials:
+      accessKeyId:
+        name: {{ $sdBackup.s3CredentialsSecretName }}
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: {{ $sdBackup.s3CredentialsSecretName }}
+        key: ACCESS_SECRET_KEY
+  retentionPolicy: {{ $sdBackup.retentionPolicy | quote }}
+  instanceSidecarConfiguration:
+    env:
+    {{- range $.Values.backup.env }}
+      - name: {{ .name }}
+        value: {{ .value | quote }}
+    {{- end }}
+    resources:
+      {{- toYaml $.Values.backup.sidecarResources | nindent 6 }}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: {{ $prefix }}-state-backup
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  schedule: {{ $sdBackup.schedule | quote }}
+  backupOwnerReference: self
+  cluster:
+    name: {{ $prefix }}-state-db
+  method: {{ $.Values.backup.method | quote }}
+  pluginConfiguration:
+    name: {{ $.Values.backup.pluginName }}
+{{- end }}
+{{- end }}

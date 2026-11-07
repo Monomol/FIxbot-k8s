@@ -1,0 +1,167 @@
+digraph system_overview {
+  graph [
+    rankdir=TB,
+    newrank=true,
+    compound=true,
+    splines=spline,
+    nodesep=0.45,
+    ranksep=0.55,
+    pad=0.35,
+    bgcolor="#FFFFFF",
+    fontname="Noto Sans",
+    fontsize=22,
+    labelloc="t",
+    label="System overview\n(one namespace, many Courses)",
+    fontcolor="#1F2933"
+  ]
+
+  node [
+    fontname="Noto Sans",
+    fontsize=11,
+    shape=box,
+    style="rounded,filled",
+    color="#4A78B5",
+    fillcolor="#EAF2FB",
+    penwidth=1.4,
+    margin="0.14,0.08"
+  ]
+
+  edge [
+    fontname="Noto Sans",
+    fontsize=9,
+    color="#5B6770",
+    fontcolor="#5B6770",
+    penwidth=1.3,
+    arrowsize=0.7
+  ]
+
+  /* ---------- actors ---------- */
+  subgraph cluster_actors {
+    label="Users";
+    fontsize=13;
+    fontcolor="#555555";
+    style="rounded,dashed";
+    color="#BBBBBB";
+    margin=10;
+
+    student [label="Student", shape=box, style="rounded,filled", fillcolor="#F2F2F2", color="#777777"];
+    teacher [label="Teacher", shape=box, style="rounded,filled", fillcolor="#F2F2F2", color="#777777"];
+    admin   [label="Admin / operator", shape=box, style="rounded,filled", fillcolor="#F2F2F2", color="#777777"];
+  }
+
+  /* ---------- platform edge ---------- */
+  dns     [label="DNS  *.fixbot.example.com\nTLS via cert-manager", fillcolor="#FFF4E5", color="#E8A33D"];
+  ingress [label="nginx Ingress\nhost-based routing", fillcolor="#FFF4E5", color="#E8A33D"];
+
+  /* ---------- shared namespace ---------- */
+  subgraph cluster_shared {
+    label="Shared namespace services (fixbot)";
+    fontsize=13;
+    fontcolor="#4A78B5";
+    style="rounded";
+    color="#4A78B5";
+    margin=14;
+
+    site        [label="Public site\nHome / About / Status / Report"];
+    pipecontrol [label="Pipe Control\n/sync  /repos  /targets  /health\n/qkb-assets on every Course host"];
+    contentpvc  [label="Shared content PVC\nsys-prompts / pipe-bases / qkb", shape=cylinder, fillcolor="#F3EAFB", color="#7B4FA6"];
+    reconcile   [label="content-reconcile CronJob\nevery 5 min, deploy-only", style="rounded,filled,dashed", fillcolor="#FFFFFF", color="#4A78B5"];
+    propagate   [label="propagate Job\nclone at sha + publish", style="rounded,filled,dashed", fillcolor="#FFFFFF", color="#4A78B5"];
+    provision   [label="per-Course provisioning Job\nadmins + OWUI settings", style="rounded,filled,dashed", fillcolor="#FFFFFF", color="#4A78B5"];
+  }
+
+  /* ---------- one Course ---------- */
+  subgraph cluster_course {
+    label="Per-Course stack  (one Course = one subdomain)";
+    fontsize=13;
+    fontcolor="#3E8E5A";
+    style="rounded";
+    color="#3E8E5A";
+    margin=14;
+
+    webui  [label="Open WebUI\nDeployment or StatefulSet\n(chats, Pipes, knowledge)", fillcolor="#E8F5EC", color="#3E8E5A"];
+    redis  [label="Dragonfly / Redis\nsessions + websockets", style="rounded,filled,dashed", fillcolor="#E8F5EC", color="#3E8E5A"];
+    chroma [label="Chroma\nvector store", style="rounded,filled,dashed", fillcolor="#E8F5EC", color="#3E8E5A"];
+    owuidb [label="Open WebUI DB\nCNPG Postgres\nusers, chats, config", shape=cylinder, fillcolor="#F3EAFB", color="#7B4FA6"];
+    statedb[label="Pipe State DB\nCNPG Postgres\nPipe Sessions + valves", shape=cylinder, fillcolor="#F3EAFB", color="#7B4FA6"];
+    cdata  [label="Course data PVC\n(uploads / cache)", shape=cylinder, fillcolor="#F3EAFB", color="#7B4FA6"];
+  }
+
+  /* ---------- observability ---------- */
+  subgraph cluster_monitoring {
+    label="Self-hosted observability";
+    fontsize=13;
+    fontcolor="#4A78B5";
+    style="rounded";
+    color="#4A78B5";
+    margin=12;
+
+    prometheus [label="Prometheus"];
+    grafana    [label="Grafana\nmonitoring.<domain>"];
+    loki       [label="Loki\nlog store"];
+    promtail   [label="promtail / logsink", style="rounded,filled,dashed", fillcolor="#FFFFFF", color="#4A78B5"];
+  }
+
+  /* ---------- external ---------- */
+  subgraph cluster_external {
+    label="External systems and external services";
+    fontsize=13;
+    fontcolor="#B5485D";
+    style="rounded";
+    color="#B5485D";
+    margin=12;
+
+    oidc     [label="id.example.com\nOIDC identity provider", fillcolor="#FDECEF", color="#B5485D"];
+    aiass    [label="AIaaS\nLLM API (key pool)", fillcolor="#FDECEF", color="#B5485D"];
+    gitlab   [label="GitLab the project\ncontent repos + CI + registry", fillcolor="#FFF9DB", color="#B7950B"];
+    s3       [label="S3 object storage\nDB backups + Loki", shape=cylinder, fillcolor="#FDECEF", color="#B5485D"];
+    clusterprom [label="cluster-prometheus\ncluster Prometheus", fillcolor="#FDECEF", color="#B5485D"];
+  }
+
+  /* ---------- flow ---------- */
+  { rank=same; student; teacher; admin; }
+  { rank=same; dns; ingress; }
+  { rank=same; site; pipecontrol; prometheus; grafana; }
+  { rank=same; webui; redis; chroma; }
+
+  student -> dns [label="HTTPS"];
+  teacher -> dns [label="HTTPS / git push"];
+  admin   -> dns [label="HTTPS"];
+
+  dns -> ingress [label="host"];
+  ingress -> site        [label="fixbot.example.com"];
+  ingress -> webui       [label="<slug>.fixbot.example.com"];
+  ingress -> pipecontrol [label="pipe-control."];
+  ingress -> pipecontrol [label="/qkb-assets/*", style=dashed, constraint=false];
+  ingress -> grafana     [label="monitoring."];
+
+  webui -> owuidb  [label="SQL"];
+  webui -> statedb [label="SQL"];
+  webui -> cdata   [label="files", style=dashed];
+  webui -> redis   [label="replicas > 1", style=dashed, constraint=false];
+  webui -> chroma  [label="replicas > 1", style=dashed, constraint=false];
+  webui -> oidc    [label="SSO"];
+  webui -> aiass   [label="LLM calls"];
+
+  webui -> contentpvc [label="subPath mount", style=dashed, constraint=false];
+  provision -> webui  [label="reconcile", style=dotted, constraint=false];
+
+  gitlab -> pipecontrol [label="content repos\nCI -> /sync?wait=1"];
+  pipecontrol -> propagate [label="spawn Job"];
+  propagate -> contentpvc [label="publish at pushed sha"];
+  reconcile -> pipecontrol [label="POST /sync\n(deploy-only)", style=dotted];
+  propagate -> statedb   [label="Pipes + valves", style=dashed, constraint=false];
+  propagate -> webui     [label="model config", style=dashed, constraint=false];
+
+  owuidb  -> s3 [label="barman WAL + full", style=dashed];
+  statedb -> s3 [label="barman WAL + full", style=dashed];
+  loki    -> s3 [label="chunks (or interim PVC)", style=dashed];
+
+  prometheus -> grafana [label="metrics"];
+  loki -> grafana       [label="logs"];
+  clusterprom -> grafana [label="infra metrics", style=dashed];
+  webui -> prometheus   [label="scrape", style=dotted, constraint=false];
+  site  -> prometheus   [label="fixbot_* metrics", style=dotted, constraint=false];
+  promtail -> loki      [label="logs", style=dashed];
+
+}

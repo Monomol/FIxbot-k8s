@@ -1,0 +1,142 @@
+{{- range $slug, $course := .Values.courses }}
+{{- $config := (include "fixbot.courseConfig" (dict "root" $ "slug" $slug "course" $course)) | fromYaml }}
+{{- if $config.ha }}
+{{- $prefix := include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}
+{{- $chromaName := printf "%s-chroma" $prefix }}
+---
+# Chroma HTTP vector store — Open WebUI's VECTOR_DB=chroma backend. A separate
+# server is required once there is more than one replica (the embedded Chroma/
+# SQLite backend is not multi-process safe). Only rendered when
+# openWebUI.replicas > 1. Ephemeral (embeddings rebuildable; the uploaded
+# source files live on the shared NFS data volume).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $chromaName }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  replicas: {{ $config.vectorDB.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: fixbot
+      fixbot.example.com/course: {{ $slug }}
+      fixbot.example.com/component: vectorstore
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: fixbot
+        fixbot.example.com/course: {{ $slug }}
+        fixbot.example.com/component: vectorstore
+    spec:
+      # PodSecurity "restricted"
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: chroma
+          image: "{{ $config.vectorDB.image.repository }}:{{ $config.vectorDB.image.tag }}"
+          imagePullPolicy: {{ $config.vectorDB.image.pullPolicy }}
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: ANONYMIZED_TELEMETRY
+              value: "false"
+            # Chroma 1.x persists to /data and writes frontend config under HOME;
+            # both must be writable by the non-root runtime user.
+            - name: HOME
+              value: /data
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            {{- toYaml $config.vectorDB.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /api/v2/heartbeat
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/v2/heartbeat
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $chromaName }}-svc
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    app.kubernetes.io/part-of: fixbot
+    fixbot.example.com/course: {{ $slug }}
+    fixbot.example.com/component: vectorstore
+---
+# Restrict the vector store to this Course's Open WebUI pods only (it is HTTP,
+# so an ingress NetworkPolicy is the isolation boundary).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $chromaName }}-np
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      fixbot.example.com/course: {{ $slug }}
+      fixbot.example.com/component: vectorstore
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              fixbot.example.com/course: {{ $slug }}
+              fixbot.example.com/component: openwebui
+      ports:
+        - port: 8000
+          protocol: TCP
+    # Prometheus — Chroma exposes /metrics on the HTTP port
+    - from:
+        - podSelector:
+            matchLabels:
+              fixbot.example.com/component: prometheus
+      ports:
+        - port: 8000
+          protocol: TCP
+{{- end }}
+{{- end }}

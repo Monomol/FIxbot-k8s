@@ -1,0 +1,98 @@
+{{- if and .Values.pipeControl.enabled .Values.pipeControl.reconcile.enabled }}
+{{- $fullname := include "fixbot.fullname" . }}
+{{- $pc := .Values.pipeControl }}
+---
+# Convergence reconciler (volume-as-green-memory era, ADR 0006): every few
+# minutes posts {"scope":"full"} to /sync?wait=1, serialized with CI runs in
+# the single wait queue. DEPLOY-ONLY — converges instances to the published
+# green epochs (onboarding, DB resets, Admin-UI drift, missed hooks); it
+# never advances epochs (sha-bearing CI runs do). A busy queue answers 202
+# and the tick self-skips — by design, the next tick retries.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $fullname }}-content-reconcile-script
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    fixbot.example.com/component: content-reconcile
+data:
+  reconcile.py: |
+{{ $.Files.Get "scripts/reconcile_sync.py" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $fullname }}-content-reconcile
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    fixbot.example.com/component: content-reconcile
+spec:
+  schedule: {{ $pc.reconcile.schedule | quote }}
+  timeZone: "Etc/UTC"
+  # The runs themselves serialize server-side (single wait queue); Forbid
+  # only guards against a previous TICK's curl still hanging on the queue.
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      # The next tick covers transient failures; SPAM-failing Jobs only
+      # cloud the kube_job_status_failed signal.
+      backoffLimit: 0
+      # Server wait cap is 570s + spawn slack; the script's own timeout is
+      # 580s.
+      activeDeadlineSeconds: 660
+      ttlSecondsAfterFinished: 3600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/part-of: fixbot
+            fixbot.example.com/component: content-reconcile
+        spec:
+          restartPolicy: Never
+          # PodSecurity "restricted" (the namespace enforced).
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          volumes:
+            - name: script
+              configMap:
+                name: {{ $fullname }}-content-reconcile-script
+                defaultMode: 0o444
+          containers:
+            - name: reconcile
+              image: "{{ $pc.image.repository }}:{{ $pc.image.tag }}"
+              imagePullPolicy: {{ $pc.image.pullPolicy }}
+              command: ["python", "/script/reconcile.py"]
+              env:
+                - name: PIPE_CONTROL_URL
+                  value: "http://{{ $fullname }}-pipe-control-svc:80/sync?wait=1"
+                - name: PIPE_CONTROL_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ $pc.tokenSecretName }}
+                      key: {{ $pc.tokenSecretKey }}
+                      optional: true
+                - name: TIMEOUT_SECONDS
+                  value: "580"
+              securityContext:
+                runAsUser: 1000
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+                  readOnly: true
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
+{{- end }}

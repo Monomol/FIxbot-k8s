@@ -1,0 +1,37 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local tooling and docs
+.gem/
+.opencode/
+.sandopencode/
+export/
+docs/
+CONTEXT.md
+CONTRIBUTING.md
+SECURITY.md
+README.md
+
+# Architecture diagram tooling (docs/ is ignored above)
+scripts/render-architecture.sh
+scripts/compose-architecture-poster.py
+
+# Versioning
+.git/
+.gitignore
+
+# Logs
+*.log
+
+# Secrets and local overrides
+.env
+*.kubeconfig
+values.local.yaml
+values.secrets.yaml

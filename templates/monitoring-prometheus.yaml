@@ -1,0 +1,241 @@
+{{- if .Values.monitoring.enabled }}
+{{- $m := .Values.monitoring }}
+{{- $ns := .Values.namespace }}
+---
+# Namespace-scoped discovery for Prometheus. We cannot create cluster-wide
+# RoleBindings/CRDs, so Prometheus watches pods/services/endpoints in THIS
+# namespace only (a namespaced Role) and discovers webui/DB/chroma/status pods
+# via kubernetes_sd — no kube-state-metrics / cluster resources required.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "fixbot.fullname" . }}-prometheus
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fixbot.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "fixbot.fullname" . }}-prometheus
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fixbot.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "endpoints"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "fixbot.fullname" . }}-prometheus
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fixbot.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "fixbot.fullname" . }}-prometheus
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "fixbot.fullname" . }}-prometheus
+    namespace: {{ $ns }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fixbot.fullname" . }}-prometheus-config
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fixbot.labels" . | nindent 4 }}
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 30s
+      evaluation_interval: 30s
+    scrape_configs:
+      - job_name: prometheus
+        static_configs:
+          - targets: ["localhost:9090"]
+
+      # Any fixbot pod carrying the prometheus.io scrape annotations
+      # (webui, chroma, status). https path is /health|/metrics per annotation.
+      - job_name: fixbot-app
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: ["{{ $ns }}"]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: "true"
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            regex: (.+)
+            target_label: pod
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            regex: (.+)
+            target_label: __metrics_path__
+          - source_labels: [__meta_kubernetes_pod_label_fixbot_example_com_course]
+            action: replace
+            regex: (.+)
+            target_label: course
+          - source_labels: [__meta_kubernetes_pod_label_fixbot_example_com_component]
+            action: replace
+            regex: (.+)
+            target_label: component
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+
+      # CNPG postgres_exporter — scrape every DB instance pod on port 9187
+      # (enabled via Cluster.spec.metrics). Course derived from pod name.
+      - job_name: cnpg
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: ["{{ $ns }}"]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_cnpg_io_cluster]
+            action: keep
+            regex: ".+"
+          - source_labels: [__address__]
+            action: replace
+            regex: (.+?)(?::\d+)?$
+            replacement: ${1}:9187
+            target_label: __address__
+          - source_labels: [__meta_kubernetes_pod_name]
+            # pod name <release>-<slug>-db-<N> -> course=<slug> (strip the
+            # release prefix so cnpg metrics share the `course` label used by
+            # the SLO/status metrics, and the dashboard's $course matches).
+            action: replace
+            regex: ^[^-]+-(.+)-db-[0-9]+$
+            replacement: "${1}"
+            target_label: course
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            regex: (.+)
+            target_label: instance
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: namespace
+
+      - job_name: loki
+        static_configs:
+          - targets: ["{{ include "fixbot.fullname" . }}-loki:3100"]
+        metrics_path: /metrics
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "fixbot.fullname" . }}-prometheus
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fixbot.labels" . | nindent 4 }}
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: {{ $m.prometheus.storageClass }}
+  resources:
+    requests:
+      storage: {{ $m.prometheus.storageSize }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fixbot.fullname" . }}-prometheus
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fixbot.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  # RWO TSDB PVC can't mount on two pods at once — terminate before replacing,
+  # or a rolling update's new pod dies with a TSDB lock conflict.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: fixbot
+      fixbot.example.com/component: prometheus
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: fixbot
+        fixbot.example.com/component: prometheus
+      annotations:
+        checksum/revision: {{ .Release.Revision | quote }}
+    spec:
+      serviceAccountName: {{ include "fixbot.fullname" . }}-prometheus
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: prometheus
+          image: "{{ $m.prometheus.image.repository }}:{{ $m.prometheus.image.tag }}"
+          imagePullPolicy: {{ $m.prometheus.image.pullPolicy }}
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --storage.tsdb.retention.time={{ $m.prometheus.retention }}
+          ports:
+            - name: http
+              containerPort: 9090
+              protocol: TCP
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+            - name: data
+              mountPath: /prometheus
+          resources:
+            {{- toYaml $m.prometheus.resources | nindent 12 }}
+          livenessProbe:
+            httpGet: { path: /-/healthy, port: 9090 }
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet: { path: /-/ready, port: 9090 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "fixbot.fullname" . }}-prometheus-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "fixbot.fullname" . }}-prometheus
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "fixbot.fullname" . }}-prometheus
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fixbot.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  selector:
+    app.kubernetes.io/part-of: fixbot
+    fixbot.example.com/component: prometheus
+{{- end }}

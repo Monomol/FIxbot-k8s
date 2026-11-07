@@ -1,0 +1,79 @@
+{{- range $slug, $course := .Values.courses }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}-ingress
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: {{ $.Values.clusterIssuer | quote }}
+spec:
+  ingressClassName: {{ $.Values.ingressClassName | quote }}
+  tls:
+    - hosts:
+        - {{ include "fixbot.courseHostname" (dict "slug" $slug "root" $) }}
+      secretName: {{ $slug }}-fixbot-example-com-tls
+  rules:
+    - host: {{ include "fixbot.courseHostname" (dict "slug" $slug "root" $) }}
+      http:
+        paths:
+          {{- if $.Values.pipeControl.enabled }}
+          # Inline question figures (repo-root assets/) served by Pipe Control
+          # from this Course's QKB repo. Root-relative
+          # /qkb-assets/<token>/<file> is what the ILP base rewrites a bare
+          # asset name to (token = sha256 of the file name): chat pages live
+          # at /c/<id> (so a relative path would resolve wrong) and Open WebUI
+          # itself owns /assets/ — hence the dedicated prefix. Longest-prefix
+          # match keeps it ahead of `/` below.
+          - backend:
+              service:
+                name: {{ include "fixbot.fullname" $ }}-pipe-control-svc
+                port:
+                  number: 80
+            pathType: Prefix
+            path: /qkb-assets
+          {{- end }}
+          - backend:
+              service:
+                name: {{ include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}-svc
+                port:
+                  number: 80
+            pathType: Prefix
+            path: /
+{{- end }}
+{{- if .Values.site.enabled }}
+{{- with .Values.site }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "fixbot.fullname" $ }}-site-ingress
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: {{ $.Values.clusterIssuer | quote }}
+spec:
+  ingressClassName: {{ $.Values.ingressClassName | quote }}
+  tls:
+    - hosts:
+        - {{ $.Values.domain }}
+      secretName: fixbot-example-com-tls
+  rules:
+    - host: {{ $.Values.domain }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: {{ include "fixbot.fullname" $ }}-site-svc
+                port:
+                  number: 80
+            pathType: Prefix
+            path: /
+{{- end }}
+{{- end }}

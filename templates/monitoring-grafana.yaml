@@ -1,0 +1,240 @@
+{{- if .Values.monitoring.enabled }}
+{{- $m := .Values.monitoring }}
+{{- $ns := .Values.namespace }}
+{{- $g := $m.grafana }}
+{{- $adminGroups := $g.adminGroups }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fixbot.fullname" . }}-grafana-config
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fixbot.labels" . | nindent 4 }}
+data:
+  grafana.ini: |
+    [server]
+    root_url = https://{{ $g.domain }}/
+    [auth]
+    disable_login_form = true
+    [auth.generic_oauth]
+    enabled = true
+    name = Example SSO
+    allow_sign_up = true
+    client_id = {{ $g.oidc.clientId }}
+    scopes = {{ $g.oidc.scopes }}
+    auth_url = {{ $g.oidc.authUrl }}
+    token_url = {{ $g.oidc.tokenUrl }}
+    api_url = {{ $g.oidc.apiUrl }}
+    auth_style = inparams
+    use_pkce = {{ $g.oidc.usePkce }}
+    use_refresh_token = {{ $g.oidc.useRefreshToken }}
+    signout_redirect_url = {{ $g.oidc.logoutUrl }}
+    groups_attribute_path = {{ $g.oidc.groupsAttributePath }}
+    {{- $adminEmails := $.Values.openWebUI.admins }}
+    {{- $emailList := list }}
+    {{- range $adminEmails }}
+    {{- $emailList = append $emailList (printf "'%s'" .) }}
+    {{- end }}
+    # Gate admin access on the admin e-mail list (same as openWebUI.admins).
+    # role_attribute_strict denies anyone who does not resolve to Admin.
+    role_attribute_strict = true
+    role_attribute_path = contains([{{ join "," $emailList }}], email) && 'Admin'
+    [users]
+    auto_assign_org_role = Viewer
+    [security]
+    disable_gravatar = true
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        uid: prometheus
+        access: proxy
+        url: http://{{ include "fixbot.fullname" . }}-prometheus:9090
+        isDefault: true
+      - name: Loki
+        type: loki
+        uid: loki
+        access: proxy
+        url: http://{{ include "fixbot.fullname" . }}-loki:3100
+{{- if $m.clusterPrometheus.enabled }}
+      - name: Cluster Prometheus
+        type: prometheus
+        uid: cluster-prometheus
+        access: proxy
+        # cluster-wide Prometheus (infra/node/cadvisor metrics). Read-only
+        # datasource; dashboards filter to the release namespace / relevant series.
+        url: {{ $m.clusterPrometheus.url | quote }}
+{{- end }}
+  providers.yaml: |
+    apiVersion: 1
+    providers:
+      - name: fixbot
+        orgId: 1
+        folder: fixbot
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana/dashboards
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "fixbot.fullname" . }}-grafana
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fixbot.labels" . | nindent 4 }}
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: {{ $g.storageClass }}
+  resources:
+    requests:
+      storage: {{ $g.storageSize }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fixbot.fullname" . }}-grafana
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fixbot.labels" . | nindent 4 }}
+spec:
+  replicas: {{ $g.replicas }}
+  # RWO Grafana PVC — Recreate so a roll never runs two pods on one volume.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: fixbot
+      fixbot.example.com/component: grafana
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: fixbot
+        fixbot.example.com/component: grafana
+      annotations:
+        checksum/revision: {{ .Release.Revision | quote }}
+    spec:
+      securityContext:
+        fsGroup: 472
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: grafana
+          image: "{{ $g.image.repository }}:{{ $g.image.tag }}"
+          imagePullPolicy: {{ $g.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          securityContext:
+            runAsUser: 472
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
+            # OAuth secret is injected at runtime from the Secret (never in the
+            # ConfigMap / chart). Grafana reads GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET.
+            - name: GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $g.oidc.clientSecretSecretName }}
+                  key: client-secret
+            - name: GF_SECURITY_ADMIN_USER
+              value: admin
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $g.oidc.clientSecretSecretName }}
+                  key: admin-password
+          volumeMounts:
+            # subPath mounts so they don't shadow /etc/grafana/provisioning
+            # (mounting the whole CM there hid Grafana's provisioning dirs and
+            # silenced datasource/dashboard provisioning).
+            - name: config
+              mountPath: /etc/grafana/grafana.ini
+              subPath: grafana.ini
+            - name: config
+              mountPath: /etc/grafana/provisioning/datasources/datasources.yaml
+              subPath: datasources.yaml
+            - name: config
+              mountPath: /etc/grafana/provisioning/dashboards/providers.yaml
+              subPath: providers.yaml
+            - name: dashboards
+              mountPath: /var/lib/grafana/dashboards
+            - name: data
+              mountPath: /var/lib/grafana
+          resources:
+            {{- toYaml $g.resources | nindent 12 }}
+          readinessProbe:
+            httpGet: { path: /api/health, port: 3000 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /api/health, port: 3000 }
+            initialDelaySeconds: 15
+            periodSeconds: 30
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "fixbot.fullname" . }}-grafana-config
+        - name: dashboards
+          configMap:
+            name: {{ include "fixbot.fullname" . }}-dashboard
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "fixbot.fullname" . }}-grafana
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "fixbot.fullname" . }}-grafana
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fixbot.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    app.kubernetes.io/part-of: fixbot
+    fixbot.example.com/component: grafana
+---
+# Private subdomain for Grafana (OIDC admin gating happens in grafana.ini).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "fixbot.fullname" . }}-grafana-ingress
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fixbot.labels" . | nindent 4 }}
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: {{ $.Values.clusterIssuer | quote }}
+spec:
+  ingressClassName: {{ $.Values.ingressClassName | quote }}
+  tls:
+    - hosts:
+        - {{ $g.domain }}
+      secretName: {{ include "fixbot.fullname" . }}-grafana-tls
+  rules:
+    - host: {{ $g.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "fixbot.fullname" . }}-grafana
+                port:
+                  number: 3000
+{{- end }}

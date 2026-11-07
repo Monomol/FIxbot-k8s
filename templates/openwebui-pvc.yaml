@@ -1,0 +1,19 @@
+{{- range $slug, $course := .Values.courses }}
+{{- $config := (include "fixbot.courseConfig" (dict "root" $ "slug" $slug "course" $course)) | fromYaml }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}-data
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ $.Values.openWebUI.dataStorageSize | quote }}
+  storageClassName: {{ $.Values.openWebUI.dataStorageClass | quote }}
+{{- end }}

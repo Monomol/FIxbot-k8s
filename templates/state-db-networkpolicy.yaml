@@ -1,0 +1,72 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- range $slug, $course := .Values.courses }}
+{{- $config := (include "fixbot.courseConfig" (dict "root" $ "slug" $slug "course" $course)) | fromYaml }}
+{{- if $config.stateDb.enabled }}
+{{- $prefix := include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}
+---
+# Pipe State DB isolation — mirrors the Open WebUI DB policy (ingress-only,
+# Platform-sanctioned; see networkpolicy.yaml). Only this Course's webui pods
+# (the Pipe code) may reach 5432.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $prefix }}-state-db-np
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: {{ $prefix }}-state-db
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - port: 8000
+          protocol: TCP
+      from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cloudnativepg
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cloudnative-pg
+    - ports:
+        - port: 5432
+          protocol: TCP
+      from:
+        - podSelector:
+            matchLabels:
+              fixbot.example.com/course: {{ $slug }}
+              fixbot.example.com/component: openwebui
+    {{- if $.Values.interimBackupDump.enabled }}
+    # Interim DB dump CronJob (S3-outage safety net) — same allowance as the
+    # Open WebUI DB policy in networkpolicy.yaml.
+    - ports:
+        - port: 5432
+          protocol: TCP
+      from:
+        - podSelector:
+            matchLabels:
+              fixbot.example.com/component: db-dump
+    {{- end }}
+    - ports:
+        - port: 9187
+          protocol: TCP
+      from:
+        - podSelector:
+            matchLabels:
+              fixbot.example.com/component: prometheus
+    {{- if gt (int $config.stateDb.instances) 1 }}
+    - ports:
+        - port: 5432
+          protocol: TCP
+      from:
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: {{ $prefix }}-state-db
+    {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

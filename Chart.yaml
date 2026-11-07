@@ -1,0 +1,14 @@
+apiVersion: v2
+name: fixbot
+description: Helm chart for a per-Course AI study-assistant platform built on Open WebUI and Pipes
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - open-webui
+  - postgres
+  - cnpg
+  - kubernetes
+  - fixbot
+maintainers:
+  - name: FIxbot Team

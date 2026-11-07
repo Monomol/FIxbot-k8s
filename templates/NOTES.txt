@@ -1,0 +1,47 @@
+FIxbot has been installed as release {{ .Release.Name }} in namespace {{ .Release.Namespace }}.
+
+Before the platform is usable, provide the environment-specific prerequisites:
+
+1. DNS + TLS
+   - Point {{ .Values.domain }} and *.{{ .Values.domain }} at your ingress endpoint.
+   - Ensure the cluster issuer named {{ .Values.clusterIssuer | quote }} exists.
+
+2. Secrets (referenced by name; never stored in values.yaml)
+   - fixbot-oidc-secret              OIDC client secret (when oidc.enabled)
+   - fixbot-grafana-oidc-secret      Grafana OIDC secret + admin password
+   - fixbot-s3-creds                 Open WebUI DB backup credentials
+   - fixbot-state-s3-creds           Pipe State DB backup credentials
+   - fixbot-loki-s3-creds            Loki object-store credentials
+   - <slug>-aiass-key                Per-Course LLM API key(s)
+   - fixbot-pipe-control-token       Bearer token for Pipe Control /sync
+   - fixbot-gitlab-token             GitLab API token for QKB provisioning
+   - fixbot-gitlab-readonly          Read-only GitLab token for content fetches
+   - fixbot-registry-pull            Image pull secret for private images
+
+   Create them with kubectl, for example:
+
+     kubectl create secret generic fixbot-oidc-secret \
+       --from-literal=client-secret=<secret> \
+       -n {{ .Release.Namespace }}
+
+3. Databases and backups
+   - The chart expects CloudNativePG and, when backup.enabled is true, the
+     Barman Cloud Plugin.
+   - Set backup.* / stateDb.backup.* and create the matching S3 Secrets first.
+
+4. Content pipeline (optional)
+   - Pipe Control can run in stub mode without any external content repos.
+   - For real propagation, provide an image at pipeControl.propagate.image and
+     configure GitLab repositories under pipeControl.repos.
+   - Enable gitlabProvisioning only after creating the GitLab token Secret.
+
+5. Observability (optional)
+   - Set monitoring.enabled=true and configure storage, Grafana OIDC, and the
+     Loki object store.
+   - Logging requires a compatible logging operator and is disabled by default.
+
+Verify the rendered manifests with:
+
+  helm template {{ .Release.Name }} . -f values.example.yaml
+
+See README.md for the full configuration overview.

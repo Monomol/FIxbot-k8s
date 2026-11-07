@@ -1,0 +1,77 @@
+{{- range $slug, $course := .Values.courses }}
+{{- $config := (include "fixbot.courseConfig" (dict "root" $ "slug" $slug "course" $course)) | fromYaml }}
+{{- if $config.ha }}
+{{- $prefix := include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}
+{{- $redisName := printf "%s-redis" $prefix }}
+---
+# Dragonfly (logging operator, Redis-compatible) — shared state store so the
+# Course's multiple Open WebUI instances coordinate sessions, websockets and
+# streaming state. Only rendered when openWebUI.replicas > 1.
+apiVersion: dragonflydb.io/v1alpha1
+kind: Dragonfly
+metadata:
+  name: {{ $redisName }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  args:
+    - --dbfilename={{ $redisName }}
+  # The platform requires both pod- and container-level security contexts.
+  podSecurityContext:
+    fsGroup: 999
+    fsGroupChangePolicy: OnRootMismatch
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsGroup: 999
+    runAsUser: 999
+  imagePullPolicy: Always
+  replicas: {{ $config.redis.replicas }}
+  resources:
+    {{- toYaml $config.redis.resources | nindent 4 }}
+---
+# Restrict the Dragonfly instance to this Course's WebUI pods (Redis port) and
+# the dragonfly-operator namespace (admin port), so the shared state is never
+# reachable from outside the Course.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $redisName }}-np
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ $redisName }}
+  policyTypes:
+    - Ingress
+  ingress:
+    # Redis port — only this Course's Open WebUI pods
+    - from:
+        - podSelector:
+            matchLabels:
+              fixbot.example.com/course: {{ $slug }}
+              fixbot.example.com/component: openwebui
+      ports:
+        - port: 6379
+          protocol: TCP
+    # Admin/operator port — the Dragonfly operator needs it for failover/monitoring
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: dragonfly-operator
+      ports:
+        - port: 9999
+          protocol: TCP
+{{- end }}
+{{- end }}

@@ -1,0 +1,354 @@
+{{- if .Values.pipeControl.enabled }}
+{{- $fullname := include "fixbot.fullname" . }}
+{{- $pc := .Values.pipeControl }}
+{{- $qkbRepos := list }}
+{{- $assetHostRepos := list }}
+{{- range $slug, $course := .Values.courses }}
+{{- $config := (include "fixbot.courseConfig" (dict "root" $ "slug" $slug "course" $course)) | fromYaml }}
+{{- $qkbRepos = append $qkbRepos $config.qkb.repo }}
+{{- $assetHostRepos = append $assetHostRepos (printf "%s.%s=%s" $slug $.Values.domain $config.qkb.repo) }}
+{{- end }}
+{{- $qkbRepos = $qkbRepos | uniq }}
+{{- $refs := list }}
+{{- $paths := list }}
+{{- if $pc.repos.sysPrompts.enabled }}
+{{- $refs = append $refs (printf "sys-prompts=%s" $pc.repos.sysPrompts.ref) }}
+{{- $paths = append $paths (printf "sys-prompts=%s" $pc.repos.sysPrompts.path) }}
+{{- end }}
+{{- if $pc.repos.pipeBases.enabled }}
+{{- $refs = append $refs (printf "pipe-bases=%s" $pc.repos.pipeBases.ref) }}
+{{- $paths = append $paths (printf "pipe-bases=%s" $pc.repos.pipeBases.path) }}
+{{- end }}
+{{- if $pc.repos.qkb.enabled }}
+{{- $refs = append $refs (printf "qkb=%s" $pc.repos.qkb.ref) }}
+{{- $paths = append $paths "qkb=qkb" }}
+{{- end }}
+---
+# Shared Pipe build files (System Prompts, Pipe Bases, QKBs). Sole writer:
+# the fixbot-pipe-propagate-* Jobs (fetch+publish inside run-propagate.sh),
+# plus the pipe-control pod's skeleton/prune loop (dirs only); every Course's
+# webui mounts it read-only (openwebui-deployment.yaml).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $fullname }}-pipe-content
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: {{ $pc.contentStorageClass | quote }}
+  resources:
+    requests:
+      storage: {{ $pc.contentStorageSize | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $fullname }}-pipe-control-scripts
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+data:
+  publish-loop.sh: |
+{{ $.Files.Get "scripts/pipe_control_publish.sh" | indent 4 }}
+  run-propagate.sh: |
+{{ $.Files.Get "scripts/run-propagate.sh" | indent 4 }}
+  server.py: |
+{{ $.Files.Get "scripts/pipe_control_server.py" | indent 4 }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $fullname }}-pipe-control
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+---
+# Lets Pipe Control discover Course API targets (the <release>-<slug>-provision
+# Secrets minted by the provisioning Jobs) for its .targets file. get+list
+# only; the Secret DATA is read at request time by the service itself.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $fullname }}-pipe-control
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+  # mode=real: spawn the propagation Job (real pipe_control CLI) on POST /sync.
+  # get/list/delete: latest-wins reaping of superseded in-flight Jobs; get for
+  # /sync?wait=1 completion polling.
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "delete"]
+  # /sync?wait=1: find the propagate Job's pod and read its log tail (where
+  # the CLI's PIPE_CONTROL_SUMMARY JSON line lands).
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["list"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $fullname }}-pipe-control
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $fullname }}-pipe-control
+subjects:
+  - kind: ServiceAccount
+    name: {{ $fullname }}-pipe-control
+    namespace: {{ $.Values.namespace }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname }}-pipe-control
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    fixbot.example.com/component: pipe-control
+spec:
+  replicas: 1
+  # Single writer to the shared volume — never overlap two publish loops.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: fixbot
+      fixbot.example.com/component: pipe-control
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: fixbot
+        fixbot.example.com/component: pipe-control
+      annotations:
+        # Pods bake the scripts ConfigMap at mount time — roll the pod when the
+        # rendered template (scripts or sidecar config) changes.
+        checksum/pipe-control: {{ (print ($.Files.Get "scripts/pipe_control_server.py") ($.Files.Get "scripts/pipe_control_publish.sh") ($.Files.Get "scripts/run-propagate.sh")) | sha256sum | quote }}
+    spec:
+      serviceAccountName: {{ $fullname }}-pipe-control
+      # the platform PodSecurity "restricted". fsGroup 65533 = the historical volume
+      # owner group (git-sync era): the propagate Jobs write as uid 65533
+      # (the tree's owner uid) and this pod's skeleton/prune loop also runs
+      # uid 65533, so the published tree stays writable for every writer
+      # (umask 002 in both).
+      securityContext:
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+        fsGroup: 65533
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: content
+          persistentVolumeClaim:
+            claimName: {{ $fullname }}-pipe-content
+        - name: scripts
+          configMap:
+            name: {{ $fullname }}-pipe-control-scripts
+            defaultMode: 0777
+      containers:
+        - name: server
+          image: "{{ $pc.image.repository }}:{{ $pc.image.tag }}"
+          imagePullPolicy: {{ $pc.image.pullPolicy }}
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          command: ["python", "/scripts/server.py"]
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: NAMESPACE
+              value: {{ $.Values.namespace | quote }}
+            - name: RELEASE
+              value: {{ $.Release.Name | quote }}
+            - name: MODE
+              value: {{ $pc.mode | quote }}
+            # Rehearsal mode: /sync {"test": true} — fetch the caller's repo at
+            # its sha into a throwaway tree (NO publish, green epoch untouched)
+            # and run the CLI --test, writing slug-prefixed copies to the
+            # sandbox `test` Course only (scripts/pipe_control_server.py +
+            # run-propagate.sh). false => such calls are rejected 400.
+            - name: TEST_ENABLED
+              value: {{ $pc.test.enabled | quote }}
+            {{- if eq $pc.mode "real" }}
+            # mode=real: POST /sync spawns a propagation Job running the real
+            # pipe_control CLI image (scripts/run-propagate.sh entrypoint).
+            - name: PROPAGATE_IMAGE
+              value: "{{ $pc.propagate.image.repository }}:{{ $pc.propagate.image.tag }}"
+            - name: PROPAGATE_IMAGE_PULL_POLICY
+              value: {{ $pc.propagate.image.pullPolicy | quote }}
+            - name: PROPAGATE_IMAGE_PULL_SECRET
+              value: {{ $pc.propagate.imagePullSecretName | quote }}
+            - name: PROPAGATE_SCRIPTS_CM
+              value: {{ $fullname }}-pipe-control-scripts
+            - name: PROPAGATE_CONTENT_PVC
+              value: {{ $fullname }}-pipe-content
+            - name: PROPAGATE_SA_NAME
+              value: {{ $fullname }}-pipe-control
+            - name: COURSES
+              value: {{ keys $.Values.courses | sortAlpha | join " " | quote }}
+            # In-Job fetch wiring (Job = sole volume writer): repo set +
+            # refs + read_repository token + fetch depth/proxy.
+            - name: PROPAGATE_GIT_USERNAME
+              value: {{ $pc.fetch.username | quote }}
+            - name: PROPAGATE_GIT_TOKEN_SECRET
+              value: {{ $pc.fetch.tokenSecretName | quote }}
+            - name: PROPAGATE_GIT_TOKEN_KEY
+              value: {{ $pc.fetch.tokenSecretKey | quote }}
+            - name: PROPAGATE_GITLAB_BASE_URL
+              value: {{ $pc.repos.gitlabBaseUrl | quote }}
+            - name: PROPAGATE_GIT_DEPTH
+              value: {{ $pc.fetch.depth | quote }}
+            - name: PROPAGATE_GIT_PROXY
+              value: {{ $pc.fetch.proxy | quote }}
+            - name: PROPAGATE_REPO_REFS
+              value: {{ $refs | join "," | quote }}
+            - name: PROPAGATE_REPO_PATHS
+              value: {{ $paths | join "," | quote }}
+            - name: PROPAGATE_QKB_REPOS
+              value: {{ if $pc.repos.qkb.enabled }}{{ $qkbRepos | join " " | quote }}{{ else }}""{{ end }}
+            {{- end }}
+            # optional: true — the stub reports "auth not configured" instead
+            # of crash-looping while the token Secret is still missing.
+            - name: PIPE_CONTROL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $pc.tokenSecretName }}
+                  key: {{ $pc.tokenSecretKey }}
+                  optional: true
+            - name: FIXBOT_SYS_PROMPTS_PATH
+              value: "/fixbot/sys-prompts"
+            - name: FIXBOT_PIPE_BASE_PATH
+              value: "/fixbot/pipe-bases"
+            - name: FIXBOT_QKB_PATH
+              value: "/fixbot/qkb"
+            # Host -> QKB repo map for the PUBLIC inline-figure route
+            # (/qkb-assets/<token>/<file>; see scripts/pipe_control_server.py).
+            # The shared Pipe Control pod serves whichever repo the request
+            # Host names, so each Course's ingress only points its /qkb-assets
+            # path at this service.
+            - name: QKB_REPO_BY_HOST
+              value: {{ $assetHostRepos | join "," | quote }}
+          volumeMounts:
+            - name: content
+              mountPath: /fixbot
+              readOnly: true
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+          resources:
+            {{- toYaml $pc.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 30
+        # Skeleton+prune only (rev 38+: the propagate Jobs are the sole
+        # writers of repo content; the git-sync sidecars are retired). Keeps
+        # the dst dirs existing (webui subPath mounts hard-fail on a missing
+        # path) and prunes qkb dirs of removed Courses.
+        - name: publish
+          image: "{{ $pc.image.repository }}:{{ $pc.image.tag }}"
+          imagePullPolicy: {{ $pc.image.pullPolicy }}
+          securityContext:
+            runAsUser: 65533
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          command: ["sh", "/scripts/publish-loop.sh"]
+          env:
+            # dst list rendered from values. These always exist (the loop
+            # mkdir -p's them) so webui subPath mounts can't fail.
+            - name: PUBLISH_DSTS
+              value: >-
+                /fixbot/sys-prompts;/fixbot/pipe-bases;{{- range $qkbRepos }}/fixbot/qkb/{{ . }};{{- end }}
+            # Prune /fixbot/qkb/<repo> dirs that have no PUBLISH_DSTS entry
+            # (orphans of removed Courses; they would fail propagation).
+            - name: PUBLISH_QKB_DIR
+              value: "/fixbot/qkb"
+          volumeMounts:
+            - name: content
+              mountPath: /fixbot
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+          resources:
+            {{- toYaml $pc.publish.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullname }}-pipe-control-svc
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    fixbot.example.com/component: pipe-control
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app.kubernetes.io/part-of: fixbot
+    fixbot.example.com/component: pipe-control
+---
+# Entry point for GitLab CI pipelines (content repos) to trigger Pipe
+# propagation. Bearer-token authenticated; only /sync, /repos, /targets,
+# /health exist.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullname }}-pipe-control-ingress
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    fixbot.example.com/component: pipe-control
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: {{ $.Values.clusterIssuer | quote }}
+spec:
+  ingressClassName: {{ $.Values.ingressClassName | quote }}
+  tls:
+    - hosts:
+        - {{ $pc.host }}
+      secretName: {{ $fullname }}-pipe-control-tls
+  rules:
+    - host: {{ $pc.host }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: {{ $fullname }}-pipe-control-svc
+                port:
+                  number: 80
+            pathType: Prefix
+            path: /
+{{- end }}

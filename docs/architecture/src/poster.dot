@@ -1,0 +1,133 @@
+digraph poster {
+  graph [
+    rankdir=TB,
+    newrank=true,
+    compound=true,
+    splines=spline,
+    nodesep=0.5,
+    ranksep=0.7,
+    pad=0.4,
+    bgcolor="#FFFFFF",
+    fontname="Noto Sans",
+    fontsize=34,
+    labelloc="t",
+    label="FIxbot  -  infrastructure at a glance\nPer-Course AI study assistant on Kubernetes",
+    fontcolor="#1F2933"
+  ]
+
+  node [
+    fontname="Noto Sans",
+    fontsize=15,
+    shape=box,
+    style="rounded,filled",
+    color="#4A78B5",
+    fillcolor="#EAF2FB",
+    penwidth=1.8,
+    margin="0.18,0.11"
+  ]
+
+  edge [
+    fontname="Noto Sans",
+    fontsize=12,
+    color="#5B6770",
+    fontcolor="#5B6770",
+    penwidth=1.6,
+    arrowsize=0.8
+  ]
+
+  subgraph cluster_users {
+    label="1. Users and edge";
+    fontsize=18;
+    fontcolor="#555555";
+    style="rounded";
+    color="#999999";
+    margin=14;
+
+    users  [label="Students\nTeachers\nAdmins", fillcolor="#F2F2F2", color="#777777"];
+    dns    [label="DNS + TLS\n*.fixbot.example.com", fillcolor="#FFF4E5", color="#E8A33D"];
+    ingress[label="nginx Ingress\nhost routing", fillcolor="#FFF4E5", color="#E8A33D"];
+  }
+
+  subgraph cluster_shared {
+    label="2. Shared namespace services";
+    fontsize=18;
+    fontcolor="#4A78B5";
+    style="rounded";
+    color="#4A78B5";
+    margin=14;
+
+    site        [label="Public site\nHome / About / Status / Report", fillcolor="#E8F5EC", color="#3E8E5A"];
+    pipecontrol [label="Pipe Control\n/sync   /repos   /targets\n/qkb-assets", fillcolor="#E8F5EC", color="#3E8E5A"];
+    monitoring  [label="Monitoring\nPrometheus + Grafana + Loki", fillcolor="#E8F5EC", color="#3E8E5A"];
+    contentpvc  [label="Shared content PVC\nsys-prompts / pipe-bases / qkb", shape=cylinder, fillcolor="#F3EAFB", color="#7B4FA6"];
+  }
+
+  subgraph cluster_course {
+    label="3. One Course  (one subdomain, isolated resources)";
+    fontsize=18;
+    fontcolor="#3E8E5A";
+    style="rounded";
+    color="#3E8E5A";
+    margin=14;
+
+    webui  [label="Open WebUI\nchats + Pipes\n1..N replicas", fillcolor="#E8F5EC", color="#3E8E5A"];
+    redis  [label="Redis / Dragonfly\nsessions", style="rounded,filled,dashed", fillcolor="#E8F5EC", color="#3E8E5A"];
+    chroma [label="Chroma\nvector store", style="rounded,filled,dashed", fillcolor="#E8F5EC", color="#3E8E5A"];
+    owuidb [label="Open WebUI DB\nCNPG Postgres", shape=cylinder, fillcolor="#F3EAFB", color="#7B4FA6"];
+    statedb[label="Pipe State DB\nCNPG Postgres", shape=cylinder, fillcolor="#F3EAFB", color="#7B4FA6"];
+  }
+
+  subgraph cluster_external {
+    label="4. Content and external services";
+    fontsize=18;
+    fontcolor="#B7950B";
+    style="rounded";
+    color="#B7950B";
+    margin=14;
+
+    gitlab [label="GitLab the project\nQKB / prompts / bases\nvalidate CI", fillcolor="#FFF9DB", color="#B7950B"];
+    oidc   [label="OIDC\nSSO", fillcolor="#FDECEF", color="#B5485D"];
+    aiass  [label="AIaaS\nLLM API", fillcolor="#FDECEF", color="#B5485D"];
+    s3     [label="S3 object storage\nDB backups + logs", shape=cylinder, fillcolor="#FDECEF", color="#B5485D"];
+    dump   [label="Interim pg_dump\ndaily, 14 d on PVC", style="rounded,filled,dashed", fillcolor="#FFFFFF", color="#B5485D"];
+  }
+
+  legend [shape=plaintext, fontsize=12, fillcolor="#FFFFFF", color="#FFFFFF", label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="5">
+    <TR><TD ALIGN="LEFT"><B>Legend</B></TD></TR>
+    <TR><TD ALIGN="LEFT">solid = request / data flow</TD></TR>
+    <TR><TD ALIGN="LEFT">dashed = optional, conditional, or backup path</TD></TR>
+    <TR><TD ALIGN="LEFT">dotted = control / reconciliation</TD></TR>
+    <TR><TD ALIGN="LEFT">cylinder = database or persistent storage</TD></TR>
+  </TABLE>>];
+
+  { rank=same; users; }
+  { rank=same; dns; ingress; }
+  { rank=same; site; pipecontrol; monitoring; contentpvc; }
+  { rank=same; webui; redis; chroma; owuidb; statedb; }
+  { rank=same; aiass; oidc; dump; s3; gitlab; legend; }
+
+  users -> dns [label="HTTPS"];
+  dns -> ingress;
+  ingress -> site        [label="root domain"];
+  ingress -> webui       [label="<slug>"];
+  ingress -> pipecontrol [label="pipe-control"];
+  ingress -> monitoring  [label="monitoring"];
+
+  webui -> owuidb  [label="SQL"];
+  webui -> statedb [label="SQL"];
+  webui -> redis   [label="replicas > 1", style=dashed];
+  webui -> chroma  [label="replicas > 1", style=dashed];
+  webui -> oidc    [label="login"];
+  webui -> aiass   [label="LLM"];
+  webui -> contentpvc [label="subPath mount", style=dashed];
+
+  gitlab -> pipecontrol [label="content push\n/sync?wait=1"];
+  pipecontrol -> contentpvc [label="propagate Job\npublish at sha"];
+  pipecontrol -> webui [label="Pipes + config", style=dashed];
+
+  owuidb  -> s3 [label="barman", style=dashed];
+  statedb -> s3 [label="barman", style=dashed];
+  dump -> owuidb  [label="pg_dump", style=dotted];
+  dump -> statedb [label="pg_dump", style=dotted];
+  monitoring -> webui [label="scrape", style=dotted];
+}

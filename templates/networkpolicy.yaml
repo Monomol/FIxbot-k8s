@@ -1,0 +1,78 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- range $slug, $course := .Values.courses }}
+{{- $config := (include "fixbot.courseConfig" (dict "root" $ "slug" $slug "course" $course)) | fromYaml }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}-db-np
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: {{ include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}-db
+  # Ingress-only: the DB is isolated by restricting WHO may connect IN. CNPG
+  # peer/join traffic and DNS/operator reachability are left to default-allow
+  # egress — this cluster's CNI does not apply pod/namespace/ipBlock selectors to
+  # Service ClusterIP destinations, so any egress rule breaks the replica join.
+  # The platform docs sanction ingress-only: "you can remove the egress rules". This
+  # also avoids hardcoding operator/control-plane node IPs.
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow ingress from the CNPG operator namespace
+    - ports:
+        - port: 8000
+          protocol: TCP
+      from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cloudnativepg
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cloudnative-pg
+    # Allow Postgres port from the same namespace (Open WebUI pods)
+    - ports:
+        - port: 5432
+          protocol: TCP
+      from:
+        - podSelector:
+            matchLabels:
+              fixbot.example.com/course: {{ $slug }}
+              fixbot.example.com/component: openwebui
+    {{- if $.Values.interimBackupDump.enabled }}
+    # Allow Postgres port from the interim DB dump CronJob (S3-outage safety
+    # net — it connects to EVERY Course's -rw service; templates/db-dump.yaml).
+    - ports:
+        - port: 5432
+          protocol: TCP
+      from:
+        - podSelector:
+            matchLabels:
+              fixbot.example.com/component: db-dump
+    {{- end }}
+    # Allow the CNPG postgres_exporter metrics port from Prometheus
+    - ports:
+        - port: 9187
+          protocol: TCP
+      from:
+        - podSelector:
+            matchLabels:
+              fixbot.example.com/component: prometheus
+    {{- if gt (int $config.postgres.instances) 1 }}
+    # CNPG peer replication/join: the replica connects INTO the primary's 5432
+    # for streaming WAL + base-backup join. The source is another DB instance
+    # pod (same cnpg.io/cluster label) — the webui-only rule above would drop it.
+    - ports:
+        - port: 5432
+          protocol: TCP
+      from:
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: {{ include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}-db
+    {{- end }}
+{{- end }}
+{{- end }}

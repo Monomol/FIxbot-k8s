@@ -1,0 +1,23 @@
+{{- range $slug, $course := .Values.courses }}
+{{- $config := (include "fixbot.courseConfig" (dict "root" $ "slug" $slug "course" $course)) | fromYaml }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}-svc
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: {{ $.Values.openWebUI.servicePort }}
+      protocol: TCP
+  selector:
+    app.kubernetes.io/part-of: fixbot
+    fixbot.example.com/course: {{ $slug }}
+    fixbot.example.com/component: openwebui
+{{- end }}

@@ -1,0 +1,140 @@
+{{- if .Values.interimBackupDump.enabled }}
+{{- $fullname := include "fixbot.fullname" . }}
+{{- $d := .Values.interimBackupDump }}
+---
+# Interim NFS DB dumps (scripts/db_dump.sh): daily pg_dump -Fc of every
+# Course's Open WebUI DB + Pipe State DB onto a platform-backed-up NFS PVC —
+# the S3-outage safety net, independent of the CNPG Barman backups. Remove
+# (interimBackupDump.enabled: false) once S3 archiving is confirmed healthy.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $fullname }}-db-dump
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    fixbot.example.com/component: db-dump
+spec:
+  accessModes:
+    - ReadWriteMany
+  # nfs-csi-backup: the platform-backed-up storage class (reclaim Delete).
+  storageClassName: {{ $d.storageClass | quote }}
+  resources:
+    requests:
+      storage: {{ $d.storageSize | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $fullname }}-db-dump-script
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    fixbot.example.com/component: db-dump
+data:
+  db-dump.sh: |
+{{ $.Files.Get "scripts/db_dump.sh" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $fullname }}-db-dump
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    fixbot.example.com/component: db-dump
+spec:
+  schedule: {{ $d.schedule | quote }}
+  timeZone: {{ $d.timeZone | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      # Keep finished Jobs ~1d so kube_job_status_* stays queryable in the
+      # cluster Prometheus (the Grafana interim-dump panels) and logs stay
+      # kubectl-discoverable; everything is also durable in Loki.
+      ttlSecondsAfterFinished: 93700
+      # 1 retry on transient DB hiccups; the run dumps every remaining DB
+      # even when one fails (the Job only exits non-zero at the end).
+      backoffLimit: 1
+      # 10 small DBs take ~1 minute; 15 minutes is generous headroom.
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/part-of: fixbot
+            fixbot.example.com/component: db-dump
+        spec:
+          restartPolicy: Never
+          # PodSecurity "restricted" (the namespace enforced). CNPG app Secrets
+          # are projected as files (like run-propagate's target keys) — never
+          # env vars.
+          securityContext:
+            runAsNonRoot: true
+            fsGroupChangePolicy: OnRootMismatch
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          volumes:
+            - name: dump
+              persistentVolumeClaim:
+                claimName: {{ $fullname }}-db-dump
+            - name: script
+              configMap:
+                name: {{ $fullname }}-db-dump-script
+                defaultMode: 0o755
+            - name: creds
+              projected:
+                sources:
+                {{- range $slug, $course := $.Values.courses }}
+                {{- $prefix := include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}
+                {{- range $kind := list "db" "state-db" }}
+                  - secret:
+                      name: {{ $prefix }}-{{ $kind }}-app
+                      # Optional: a Course mid-teardown (or before first
+                      # provisioning) must not block the whole dump run.
+                      optional: true
+                      items:
+                        - key: username
+                          path: user-{{ $slug }}-{{ $kind }}
+                        - key: password
+                          path: pass-{{ $slug }}-{{ $kind }}
+                        - key: host
+                          path: host-{{ $slug }}-{{ $kind }}
+                        - key: dbname
+                          path: name-{{ $slug }}-{{ $kind }}
+                {{- end }}
+                {{- end }}
+          containers:
+            - name: dump
+              image: {{ $d.image | quote }}
+              imagePullPolicy: {{ $d.pullPolicy | default "IfNotPresent" }}
+              command: ["sh", "/script/db-dump.sh"]
+              env:
+                - name: RELEASE
+                  value: {{ $.Release.Name | quote }}
+                - name: COURSES
+                  value: {{ keys $.Values.courses | sortAlpha | join " " | quote }}
+                - name: RETENTION_DAYS
+                  value: {{ $d.retentionDays | quote }}
+                - name: PGSSLMODE
+                  value: "require"
+              securityContext:
+                runAsUser: 1000
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: dump
+                  mountPath: /dump
+                - name: script
+                  mountPath: /script
+                  readOnly: true
+                - name: creds
+                  mountPath: /creds
+                  readOnly: true
+              resources:
+                {{- toYaml $d.resources | nindent 16 }}
+{{- end }}

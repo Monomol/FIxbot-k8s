@@ -1,0 +1,23 @@
+{{- range $slug, $course := .Values.courses }}
+{{- $config := (include "fixbot.courseConfig" (dict "root" $ "slug" $slug "course" $course)) | fromYaml }}
+{{- if and $config.backup $config.backup.enabled }}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: {{ include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}-backup
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  schedule: {{ $.Values.backup.schedule | quote }}
+  backupOwnerReference: self
+  cluster:
+    name: {{ include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}-db
+  # Barman Cloud Plugin base backups.
+  method: {{ $.Values.backup.method | quote }}
+  pluginConfiguration:
+    name: {{ $.Values.backup.pluginName }}
+{{- end }}
+{{- end }}

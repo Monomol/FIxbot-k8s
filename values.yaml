@@ -1,0 +1,717 @@
+# Fixbot Helm Chart Values
+
+# Global settings applied to all resources. Replace these with the values for
+# your own cluster/domain before deploying.
+domain: fixbot.example.com
+namespace: fixbot
+ingressClassName: nginx
+clusterIssuer: letsencrypt-prod
+clusterIngressEndpoint: ""
+
+# Multi-replica prerequisites. NOT materialized for a Course at replicas: 1;
+# automatically applied when a Course's openWebUI.replicas is raised above 1
+# (see NOTES.txt). Per-Course overrides go under `course.redis` / `course.vectorDB`.
+redis:
+  # Dragonfly (Redis-compatible) — shared sessions / websocket / streaming
+  # state so multiple WebUI instances coordinate (VECTOR_DB=redis prerequisites).
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi   # Dragonfly refuses to start below 256Mi + overhead
+
+vectorDB:
+  # Chroma HTTP vector store — Open WebUI needs an external vector DB once there
+  # is more than one replica (the embedded Chroma/SQLite backend crashes in
+  # multi-process). Reachable only by this Course's WebUI pods (NetworkPolicy).
+  # Chroma is a single-server store by design; prefer scaling its `resources`
+  # over adding replicas.
+  replicas: 1
+  image:
+    repository: chromadb/chroma
+    tag: 1.5.9
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+
+# Open WebUI defaults (overridable per-Course)
+openWebUI:
+  image:
+    repository: ghcr.io/open-webui/open-webui
+    # Pinned to a stable release (not `main`): containers only change when we
+    # deliberately bump this tag. imagePullPolicy stays `Always` so a re-tagged
+    # pinned build (e.g. a security fix) is picked up on pod start.
+    # Version bumps are TAG-ONLY: no manual DB migration scripts — Open WebUI
+    # Alembic-migrates automatically (pod-0 `db-migrate` init on HA Courses,
+    # in-app at boot on single-replica). Migrations are forward-only: verify
+    # S3 backups are healthy BEFORE bumping (a failed migration = restore).
+    tag: v0.11.3
+    pullPolicy: Always
+  # Administrator e-mails applied to EVERY Course. On first login through SSO
+  # the account is bound (OAUTH_MERGE_ACCOUNTS_BY_EMAIL) to a pre-created admin.
+  # A Course may add more admins via `course.admins`; it cannot remove these.
+  # Leave empty to provision no global admins.
+  admins: []
+  replicas: 3
+  # Self-service signup (ENABLE_SIGNUP), rendered into EVERY Course instance as
+  # `ENABLE_SIGNUP=<selfSignup>` (authoritative at boot: persistentConfig is
+  # false). true = anyone may create an account from the login page
+  # (e-mail/password) in ADDITION to SSO; it also needs the password form
+  # (oidc.disablePasswordAuth: false) or the signup endpoint 403s. DEFAULT OFF —
+  # Course-wide this is a public account-creation surface. Gotcha: OWUI
+  # auto-disables signup after the FIRST user, and the provisioning Job's
+  # bootstrap service account IS that first user, so the Job re-enables it after
+  # bootstrap when true (scripts/provision.py + REENABLE_SIGNUP). SSO is
+  # unaffected (oauth.enable_signup is a separate key).
+  selfSignup: false
+  # Database connection-pool sizing (per Open WebUI instance). Only applied when
+  # replicas > 1; total conns = pool budget x replicas must stay below
+  # `postgres.maxConnections`. Docs starting point: 15 / 20.
+  poolSize: 15
+  poolMaxOverflow: 20
+  # Performance tuning applied when replicas > 1 (Open WebUI "scaled deployment"
+  # baseline). See docs.openwebui.com/getting-started/advanced-topics/scaling.
+  perf:
+    threadPoolSize: 2000            # blocking-work concurrency ceiling (default 40)
+    userActiveStatusUpdateInterval: 120  # presence writes throttle (default 60)
+    orjson: true                    # faster JSON encoder (Socket.IO / Redis payloads)
+    asyncDnsResolver: true          # c-ares async DNS resolver
+    disableCompressionMiddleware: true  # nginx/ingress already compresses responses
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  dataStorageSize: 5Gi
+  dataStorageClass: standard
+  servicePort: 8080
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  # Prometheus scraping is left DISABLED (empty) for Open WebUI: v0.11.x serves
+  # an HTML shell at /metrics and JSON at /health — neither is Prometheus text,
+  # so a scrape yields a broken/down target with no real series. Course health
+  # + ready-replica counts are scraped from the status page /metrics exporter
+  # instead (see templates/site.yaml + monitoring-prometheus.yaml).
+  prometheusAnnotations: {}
+
+  # Provisioning Job — declares admins + general Open WebUI settings against the
+  # running instance on every `helm upgrade` (not just admins). Env ConfigVars
+  # below seed fresh instances; the Job pushes value changes to already-running ones.
+  provisioning:
+    enabled: true
+    image:
+      repository: python
+      tag: "3.12.16-alpine"
+      pullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    # Dedicated admin identity used ONLY by the provisioning Job (a service
+    # account). Auto-created on a fresh DB via ENABLE_INITIAL_ADMIN_SIGNUP and
+    # its per-Course API key is stored in a Secret. Never an SSO user.
+    serviceAccount:
+      email: fixbot@fixbot-system.local
+      name: fixbot
+    # Global defaults, merged with per-Course `course.provisioning.settings`.
+    settings:
+      defaultModels: ""            # no built-in models; pipes expose them
+      defaultPinnedModels: ""
+      # MODEL_ORDER_LIST semantics (verified against OWUI v0.11.3 main.py
+      # get_models): an EMPTY list = no sorting (pipes land after base models
+      # in DB-insertion order); a NON-EMPTY list makes the backend sort every
+      # UNLISTED model by name — the list is applied AFTER access filtering
+      # (get_filtered_models), so it changes ONLY display order, never which
+      # models exist or who can see them. We therefore set exactly one anchor
+      # id that matches NO real model: the entire selector becomes
+      # name-sorted, which groups the uniformly named "[TYPE][LANG] <name>"
+      # pipes (codepoint sort: digits < A-Z < "[" < a-z). Never put real pipe
+      # ids here: listed ids pin first and later-created pipes would land in
+      # the tail after them.
+      modelOrderList: ["fixbot-alphabetical-sort-anchor"]
+      defaultModelMetadata: {}
+      defaultModelParams: {}
+      # e.g. {"temperature": 0.7, "top_p": 0.9, "seed": 42, "max_tokens": 2048}
+
+# CNPG Postgres defaults (overridable per-Course)
+postgres:
+  # The upstream CloudNativePG image bundles the barman-cloud client needed by
+  # the Barman Cloud Plugin. Pin the major version your operator supports.
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.3-system-trixie
+  instances: 1
+  storageClass: standard
+  storageSize: 10Gi
+  # Schedule DB instances on distinct nodes. `preferred` is CNPG's default
+  # (soft anti-affinity — NOT a guarantee). Set `required` per-Course when
+  # instances > 1 to actually guarantee replicas never share a node.
+  podAntiAffinityType: preferred
+  # Postgres connection ceiling (max_connections). Must comfortably exceed
+  # replicas x (openWebUI.poolSize + poolMaxOverflow). Default is 100.
+  maxConnections: 100
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+
+# S3 backup via CNPG Barman Cloud Plugin (ADR 0004). In-tree barmanObjectStore
+# is deprecated (removed in CNPG 1.30); the per-Course ObjectStore CR + the
+# plugin's WAL-archival sidecar are used instead. The `env` workarounds below
+# are injected onto the plugin sidecar (ObjectStore.instanceSidecarConfiguration).
+backup:
+  enabled: false
+  schedule: "0 0 0 * * 0"  # Weekly on Sunday at midnight UTC
+  retentionPolicy: "30d"
+  # Barman Cloud Plugin method + plugin name. The plugin must be installed in
+  # the cluster by the operator.
+  method: "plugin"
+  pluginName: "barman-cloud.cloudnative-pg.io"
+  # Base S3 location for CNPG barman backups. Each Course writes its own
+  # archives under a per-Course subpath (see postgres-cluster.yaml) so clusters
+  # never collide. The Secret must exist before enabling backups.
+  destinationPath: "s3://example-fixbot-backups"
+  endpointURL: "https://s3.example.com"
+  # Name of an existing Secret containing ACCESS_KEY_ID and ACCESS_SECRET_KEY
+  s3CredentialsSecretName: "fixbot-s3-creds"
+  # S3 compatibility env vars for S3-compatible object stores.
+  env:
+    - name: AWS_REQUEST_CHECKSUM_CALCULATION
+      value: when_required
+    - name: AWS_RESPONSE_CHECKSUM_VALIDATION
+      value: when_required
+    - name: AWS_NO_CHUNKED_ENCODING
+      value: "true"
+  # The plugin's native sidecar default is 1 CPU / 512Mi, but it peaks around
+  # 200Mi and idles around 1m CPU. Every DB pod carries one, so cap it to keep
+  # the namespace memory/CPU quota usable.
+  sidecarResources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+
+# Interim PVC DB dumps — optional safety net (templates/db-dump.yaml,
+# scripts/db_dump.sh). A daily `pg_dump -Fc` of EVERY Course database (Open
+# WebUI DB + Pipe State DB) lands on a PVC, pruned after `retentionDays`. NOT a
+# replacement for the CNPG S3 backups — use it only while S3 archiving is
+# unavailable or unverified.
+interimBackupDump:
+  enabled: false
+  # 03:15 UTC daily — off-peak, clear of the Sunday-midnight S3 full backups.
+  schedule: "15 3 * * *"
+  timeZone: "Etc/UTC"
+  retentionDays: 14
+  storageSize: 5Gi
+  storageClass: standard
+  # pg_dump must match the server major — reuse the CNPG server image.
+  image: ghcr.io/cloudnative-pg/postgresql:18.3-system-trixie
+  pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+
+# OpenAI-compatible LLM backend defaults
+aiass:
+  enabled: false
+  baseUrl: "https://llm.example.com/v1"
+  # Optional key pool: number of API keys handed to the Course's Open WebUI
+  # (workaround for per-key request limits). 1 = single key (default; env
+  # OPENAI_API_KEY from secret key `api-key`). Values >1 switch env to the
+  # plural OPENAI_API_KEYS (secret key `api-keys`, semicolon-joined) and pin
+  # per-connection numeric model prefixes 0..N-1; Open WebUI exposes
+  # FIXBOT_KEY_POOL_SIZE with the same N.
+  keyPoolSize: 1
+
+# ============================================================
+# FIxbot study-assistant tooling (glossary: CONTEXT.md)
+# ============================================================
+
+# Open WebUI application settings rendered as env vars into EVERY Course
+# instance (templates/openwebui-deployment.yaml). With persistentConfig: false
+# these env vars are authoritative at every boot — this file is the single
+# source of truth; Admin-UI changes do NOT survive a pod restart.
+webuiSettings:
+  webuiName: "FIxbot"
+  # false = env always wins (declarative). true = first boot seeds the DB and
+  # later env changes are silently IGNORED on existing Courses.
+  persistentConfig: false
+  # New SSO users land in `pending` and see the overlay below until promoted
+  # (Open WebUI's own default is already `pending`; pinned explicitly). The
+  # pending->user auto-approval tool is external.
+  defaultUserRole: "pending"
+  pendingUserOverlayTitle: "Your Account Has Been Temporarily Blocked"
+  pendingUserOverlayContent: >-
+    **If this is your first time logging in, just refresh this page or click
+    the "Check Again" button below.**<br><br>If you still see this page after
+    refreshing, it means your account is not authorized to access this course.
+    Please check the following:<br>- Are you using the account provided by your
+    institution?<br>- Are you signing in to the correct course? Check the URL
+    of the page.<br><br>If you still cannot log in, please contact the course
+    administrator.
+  # Default preferences for Settings > Interface (JSON OBJECT; a user's own
+  # choice always wins over these defaults).
+  interfaceSettings:
+    showUpdateToast: false
+    showChangelog: false
+    renderMarkdownInPreviews: false
+    autoTags: false
+    renderMarkdownInUserMessages: false
+    richTextInput: false
+    renderMarkdownInAssistantMessages: true
+  # Hide Open WebUI's "admin details" from non-admin users (SHOW_ADMIN_DETAILS).
+  showAdminDetails: false
+  # Suggested prompts above the chat input: `help` lists the active Pipe's
+  # commands (implemented by the Pipes themselves).
+  promptSuggestions:
+    - title: ["Help", "show a list of available commands for the pipe"]
+      content: "help"
+  # Features forced OFF: students interact with Pipes, not built-in Open WebUI
+  # machinery.
+  features:
+    titleGeneration: false
+    tagsGeneration: false
+    ollamaApi: false
+    followUpGeneration: false
+    autocompleteGeneration: false
+    codeExecution: false
+    codeInterpreter: false
+    evaluationArenaModels: false
+    userChatControls: false
+    # Plain-user chat capabilities, all forced OFF (USER_PERMISSIONS_CHAT_*).
+    # Key = the env-var suffix (rendered as USER_PERMISSIONS_CHAT_<KEY>);
+    # students interact with the Pipe they are assigned, no chat chrome.
+    userPermissions:
+      VALVES: false
+      SYSTEM_PROMPT: false
+      PARAMS: false
+      FILE_UPLOAD: false
+      WEB_UPLOAD: false
+      DELETE: false
+      SHARE: false
+      ALLOW_PUBLIC_SHARING: false
+      EXPORT: false
+      IMPORT: false
+      EDIT: false
+      DELETE_MESSAGE: false
+      CONTINUE_RESPONSE: false
+      REGENERATE_RESPONSE: false
+      STT: false
+      TTS: false
+      CALL: false
+      MULTIPLE_MODELS: false
+      TEMPORARY: false
+  # Cache the Pipe-created model list (Pipe changes may take up to `ttl`
+  # seconds to appear in the selector).
+  baseModelsCache:
+    enabled: true
+    ttl: 600
+  # Recycle pooled DB connections (seconds); keeps connections fresh across
+  # failovers.
+  databasePoolRecycle: 1800
+  # Lock browser CORS to the Course's own origin (students are same-origin;
+  # Pipe Control calls the API server-to-server, unaffected by CORS).
+  corsPerCourseOrigin: true
+
+# Question Knowledge Base (QKB) selection. Each Course's active QKB repo is
+# <gitlab-group>/qkb/<slug>-<year>; `year` is the academic-year start. A Course
+# may pin another repo via `course.qkb.repo`. Semester rollover = create the new
+# repo (auto, see gitlabProvisioning) + bump `year` (or set a per-Course
+# override) + helm upgrade. Old repos are never deleted.
+qkb:
+  year: 2026
+
+# Pipe State DB — a SECOND, per-Course CNPG Cluster holding Pipe Session state
+# (transcripts, per-chat progress; glossary "Pipe State DB", ADR 0005). Single
+# instance by design: appends to rows keyed by distinct chat_id do not lock
+# each other, and student write load is light. Backups go to their OWN bucket
+# under a dedicated S3 identity.
+stateDb:
+  enabled: true
+  instances: 1
+  imageName: ""                     # empty = inherit `postgres.imageName`
+  storageClass: standard
+  storageSize: 2Gi
+  database: fixbot_state
+  owner: fixbot
+  maxConnections: 100
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+  backup:
+    # Backups to the Pipe State DB's dedicated bucket and Secret.
+    enabled: false
+    schedule: "0 0 0 * * 0"         # Weekly Sunday midnight UTC (as main DB)
+    retentionPolicy: "30d"
+    destinationPath: "s3://example-fixbot-state-backups"
+    endpointURL: "https://s3.example.com"
+    s3CredentialsSecretName: "fixbot-state-s3-creds"
+    # (reuses the top-level `backup.env` AWS_* workarounds)
+
+# Pipe Control — FIxbot's content-delivery service: it merges Pipe Bases +
+# System Prompts + QKBs into Open WebUI Pipes and pushes them into Course
+# instances. mode=real: POST /sync spawns a fixbot-pipe-propagate-* K8s Job
+# running the real pipe_control CLI (propagate.* below) against the content
+# volume; the pod itself stays the light HTTP front (`image`, python stub) so
+# health/ingress/RBAC don't change. Propagation-Job logs land in Loki.
+pipeControl:
+  enabled: true
+  mode: stub                        # stub | real (stub = /sync only echoes)
+  image:
+    repository: python
+    tag: "3.12.16-alpine"
+    pullPolicy: IfNotPresent
+  # Propagation Job (mode=real) — the pipe_control CLI image. This is a
+  # bring-your-own image: set the repository to an image you can pull.
+  propagate:
+    image:
+      repository: example.com/fixbot/pipe-control
+      tag: latest
+      pullPolicy: Always
+    imagePullSecretName: fixbot-registry-pull
+  host: pipe-control.fixbot.example.com
+  # Pre-created Secret with the Bearer token CI sends to /sync. The same value
+  # must also live in the CI system as a masked variable.
+  tokenSecretName: fixbot-pipe-control-token
+  tokenSecretKey: token
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 64Mi
+  # Shared RWX volume `fixbot-pipe-content` holding all Pipe build files
+  # (sys-prompts/, pipe-bases/, qkb/<repo>/ + their real .git). Sole writer:
+  # the fixbot-pipe-propagate-* Jobs (fetch+publish in run-propagate.sh) —
+  # every Course's webui mounts it read-only via subPath.
+  contentStorageSize: 2Gi
+  contentStorageClass: standard
+  # Credentials the propagation Job uses to clone the content repos. Least
+  # privilege: a GitLab group access token with ONLY `read_repository`
+  # (clones cannot push or call the API even if the pod is compromised).
+  # The api-scope token is reserved for the gitlabProvisioning hook.
+  fetch:
+    username: "oauth2"
+    tokenSecretName: fixbot-gitlab-readonly
+    tokenSecretKey: token
+    # Shallow depth of the Job's clones. A sha-bearing /sync whose sha fell
+    # out of this window (even after a direct sha fetch) is treated as
+    # SUPERSEDED by a newer push and skips GREEN — the newer push's own
+    # pipeline grades the newer content (ADR 0006).
+    depth: 50
+    # Optional HTTP(S) proxy for the Job's git fetches. Leave empty for direct
+    # egress. The Job sets NO_PROXY for in-cluster addresses, so CLI HTTP
+    # calls stay direct.
+    proxy: ""
+  # Skeleton+prune loop container (keeps dst dirs for webui subPath mounts,
+  # prunes qkb dirs of removed Courses — it never writes repo content).
+  publish:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 32Mi
+      limits:
+        cpu: 250m
+        memory: 32Mi
+  # Convergence reconciler: a tiny CronJob that POSTs {"scope":"full"} to
+  # /sync?wait=1 every few minutes. Serialized in the single wait queue with CI
+  # runs; DEPLOY-ONLY — it converges instances to the published epochs
+  # (onboarding, DB resets, Admin-UI drift, missed hooks), never advancing
+  # epochs itself. Hitting the server's wait budget -> 202, self-skips to the
+  # next tick.
+  reconcile:
+    enabled: true
+    schedule: "*/5 * * * *"
+  # --test rehearsal mode: a `/sync` with `{"test": true}` fetches the caller's
+  # repo at the pushed sha into a THROWAWAY tree — it NEVER publishes, so the
+  # per-repo epoch is untouched — and runs the CLI `--test`, which reads each
+  # real target read-only and writes slug-prefixed copies to the sandbox
+  # `test` Course instance only. false => such calls are rejected 400 (never
+  # silently downgraded to a real propagation).
+  test:
+    enabled: true
+  repos:
+    gitlabBaseUrl: "https://gitlab.example.com/fixbot"
+    # Global (type-a) content repos. `ref` is only the shallow FETCH VEHICLE
+    # for sha-bearing /sync runs (the Job clones `ref` at GIT_DEPTH and
+    # checks out the pushed sha inside that window) — green-ness is enforced
+    # by WHICH shas ever call /sync (pipelines only call after validate
+    # passes); the published volume is the per-repo green memory (ADR 0006,
+    # rev 43+; the old `validated`-branch promotion channel is retired).
+    sysPrompts:
+      enabled: true
+      path: pipes/sys-prompts
+      ref: main
+    pipeBases:
+      enabled: true
+      path: pipes/pipe-bases
+      ref: main
+    # Per-Course QKB repos (fixbot/qkb/<repo>), repo names derived from
+    # `courses` (+ qkb.year / course.qkb.repo overrides). A repo that does not
+    # exist yet is skipped loudly (never fails other Courses), like the old
+    # optional-sidecar behavior.
+    qkb:
+      enabled: true
+      ref: main
+
+# GitLab provisioning — post-install/post-upgrade hook Job that ensures the
+# qkb subgroup and one QKB repo per Course (<slug>-<year>) with the Pipe-type
+# skeleton (ILP/EP/CEP/PEP + CI files) exist. NEVER deletes. Needs the
+# pre-created gitlab token Secret (api scope, Maintainer on the group) —
+# enable only after creating it (see README).
+gitlabProvisioning:
+  enabled: false
+  gitlabUrl: "https://gitlab.example.com"
+  groupPath: fixbot
+  qkbSubgroup: qkb
+  tokenSecretName: fixbot-gitlab-token
+  tokenSecretKey: token
+  image:
+    repository: python
+    tag: "3.12.16-alpine"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+
+# OIDC / SSO defaults. Disabled by default; set enabled: true and provide a
+# client ID + Secret for your identity provider.
+oidc:
+  enabled: false
+  providerUrl: "https://id.example.com/.well-known/openid-configuration"
+  providerName: "Example SSO"
+  autoRedirect: false
+  disablePasswordAuth: true
+  # Shared client for all Courses. Courses with `oidc: {}` inherit these; a
+  # Course may override either key.
+  clientId: ""
+  clientSecretSecretName: fixbot-oidc-secret
+  # OIDC scopes. Include offline_access so the IdP issues refresh tokens and
+  # server-side OAuth sessions survive past the access-token lifetime.
+  scopes: "openid email profile offline_access"
+  # Send PKCE (SHA-256) on every auth request. Any other value is rejected by
+  # Open WebUI at startup.
+  codeChallengeMethod: "S256"
+  # Bind an SSO login to a pre-created account (e.g. a pre-provisioned admin)
+  # based on matching e-mail.
+  mergeByEmail: true
+
+# Network policies
+networkPolicy:
+  enabled: true
+
+# Optional public site at the root domain (Home/About/Contacts/Status/Report).
+# The site is a separate image (site.py + assets); set the repository to an
+# image you can pull. The Course set is injected as env at pod start.
+site:
+  enabled: false
+  replicas: 1
+  image:
+    repository: example.com/fixbot/site
+    tag: latest
+    pullPolicy: Always
+  # Pull credential for the site image, when it lives in a private registry.
+  imagePullSecretName: fixbot-registry-pull
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 64Mi
+
+# Logging (SyslogNGFlow + SyslogNGOutput). Enable only if your cluster runs a
+# compatible logging operator that forwards to the in-namespace syslog receiver.
+logging:
+  enabled: false
+  # loggingRef must match the cluster's logging operator configuration.
+  loggingRef: "default"
+  syslog:
+    # Full FQDN is required: the operator resolves from its own namespace.
+    host: "fixbot-fixbot-logsink-svc.fixbot.svc.cluster.local"
+    port: 5514
+
+# Dashboards (self-hosted Grafana provisioning, ADR 0004)
+dashboards:
+  enabled: false
+
+# Self-hosted observability stack (Prometheus + Grafana + Loki), ADR 0004.
+# All components are namespace-scoped (no cluster-wide RBAC/CRDs). Prometheus
+# uses a namespaced ServiceAccount + Role for pod discovery restricted to this
+# namespace. Set enabled: true and configure storage classes and credentials
+# for your cluster.
+monitoring:
+  enabled: false
+  # Prometheus
+  prometheus:
+    image:
+      repository: prom/prometheus
+      tag: v3.16.0
+      pullPolicy: IfNotPresent
+    retention: "15d"
+    storageSize: 5Gi
+    storageClass: standard    # Delete-reclaim: TSDB is reproducible, not precious
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+  # Optional cluster-wide Prometheus datasource for infra/node/cAdvisor metrics
+  # that the namespace-scoped Prometheus cannot see.
+  clusterPrometheus:
+    enabled: false
+    url: "http://prometheus.monitoring.svc:9090"
+  # Grafana (single web client for dashboards + Loki logs)
+  grafana:
+    image:
+      repository: grafana/grafana
+      tag: 11.6.16
+      pullPolicy: IfNotPresent
+    replicas: 1
+    domain: monitoring.fixbot.example.com   # wildcard DNS + cert-manager cover it
+    # Grafana's own database + provisioning (small, Delete-reclaim).
+    storageSize: 1Gi
+    storageClass: standard
+    # Admin access is gated on the admin e-mails (reuses the global
+    # `openWebUI.admins` list) via the `email` claim. Optionally add external
+    # group identifiers here.
+    adminGroups: []
+    oidc:
+      clientId: ""
+      clientSecretSecretName: "fixbot-grafana-oidc-secret"
+      scopes: "openid email profile"
+      authUrl: "https://id.example.com/oidc/authorize"
+      tokenUrl: "https://id.example.com/oidc/token"
+      apiUrl: "https://id.example.com/oidc/userinfo"
+      logoutUrl: "https://id.example.com/oidc/logout"
+      groupsAttributePath: "groups"
+      usePkce: true
+      useRefreshToken: true
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: "1"
+        memory: 512Mi
+  # Loki — log store on its OWN S3 bucket (separate from DB backups), 30-day
+  # compactor retention per ADR 0004. Creds = fixbot-loki-s3-creds.
+  loki:
+    image:
+      repository: grafana/loki
+      tag: 3.7.9
+      pullPolicy: IfNotPresent
+    destinationPath: "s3://example-fixbot-loki"
+    endpointURL: "https://s3.example.com"
+    region: "us-east-1"
+    s3CredentialsSecretName: "fixbot-loki-s3-creds"
+    retention: "744h"           # 30 days, enforced by the Loki Compactor
+    # Loki's WAL disk-full guard uses statfs() of the PVC mount. Raise the
+    # threshold if the underlying filesystem reports shared-volume usage rather
+    # than the PVC's own usage.
+    diskFullThreshold: 0.99
+    # Optional local-filesystem fallback when S3 is unavailable. Logs written
+    # here are not retro-shipped to the bucket.
+    interimFilesystem:
+      enabled: false
+      size: 5Gi
+      storageClass: standard
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: "1"
+        memory: 512Mi
+  # promtail-as-syslog-server — receives pod logs from the logging operator
+  # and pushes them to Loki (the `logging.syslog.host`).
+  promtail:
+    image:
+      repository: grafana/promtail
+      tag: 3.6.11
+      pullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: "1"
+        memory: 128Mi
+
+# ============================================================
+# Courses — one entry per Course slug
+# ============================================================
+# The key is the Course slug; it becomes the subdomain prefix and the prefix
+# for all Kubernetes resource names. Replace the example entry with your own
+# Courses, or remove `courses` entirely if you do not need one.
+courses:
+  example:
+    # Display label on the optional public site (defaults to the slug).
+    name: "Example Course"
+    # Omit or set false to hide the Course from the optional public site.
+    listed: false
+    # Additional admins for this Course (global openWebUI.admins always apply).
+    admins: []
+    openWebUI:
+      replicas: 1
+    aiass:
+      apiKeySecretName: example-aiass-key
+    oidc: {}
+    # Optional per-Course overrides:
+    # qkb:
+    #   repo: example-2026          # defaults to "<slug>-<qkb.year>"
+    # postgres:
+    #   storageSize: 10Gi
+    #   instances: 2
+    #   storageClass: standard
+    #   maxConnections: 200
+    #   resources: {}
+    # stateDb: {}
+    # redis: {}
+    # vectorDB: {}

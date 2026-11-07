@@ -1,0 +1,81 @@
+# Example overrides for a fuller FIxbot deployment.
+#
+# Use with:
+#   helm template fixbot . -f values.example.yaml
+#   helm upgrade --install fixbot . -n fixbot -f values.example.yaml
+#
+# Every value below is a placeholder. Replace domains, buckets, client IDs,
+# image repositories, and Secret names with values for your environment.
+# Secrets are referenced by name only; create them in the cluster first.
+
+domain: fixbot.example.com
+namespace: fixbot
+clusterIngressEndpoint: ingress.example.com
+
+openWebUI:
+  admins:
+    - admin@example.com
+
+backup:
+  enabled: true
+  destinationPath: "s3://example-fixbot-backups"
+  endpointURL: "https://s3.example.com"
+  s3CredentialsSecretName: "fixbot-s3-creds"
+
+stateDb:
+  backup:
+    enabled: true
+    destinationPath: "s3://example-fixbot-state-backups"
+    endpointURL: "https://s3.example.com"
+    s3CredentialsSecretName: "fixbot-state-s3-creds"
+
+aiass:
+  enabled: true
+  baseUrl: "https://llm.example.com/v1"
+
+oidc:
+  enabled: true
+  providerUrl: "https://id.example.com/.well-known/openid-configuration"
+  providerName: "Example SSO"
+  clientId: "example-client-id"
+  clientSecretSecretName: "fixbot-oidc-secret"
+
+pipeControl:
+  enabled: true
+  mode: stub
+  host: pipe-control.fixbot.example.com
+  tokenSecretName: fixbot-pipe-control-token
+  fetch:
+    tokenSecretName: fixbot-gitlab-readonly
+  repos:
+    gitlabBaseUrl: "https://gitlab.example.com/fixbot"
+
+gitlabProvisioning:
+  enabled: false
+  gitlabUrl: "https://gitlab.example.com"
+
+site:
+  enabled: true
+  image:
+    repository: example.com/fixbot/site
+
+monitoring:
+  enabled: true
+  grafana:
+    domain: monitoring.fixbot.example.com
+    oidc:
+      clientId: "example-grafana-client-id"
+  loki:
+    destinationPath: "s3://example-fixbot-loki"
+    endpointURL: "https://s3.example.com"
+    s3CredentialsSecretName: "fixbot-loki-s3-creds"
+
+courses:
+  example:
+    name: "Example Course"
+    listed: true
+    openWebUI:
+      replicas: 1
+    aiass:
+      apiKeySecretName: example-aiass-key
+    oidc: {}

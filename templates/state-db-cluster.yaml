@@ -1,0 +1,109 @@
+{{- range $slug, $course := .Values.courses }}
+{{- $config := (include "fixbot.courseConfig" (dict "root" $ "slug" $slug "course" $course)) | fromYaml }}
+{{- if $config.stateDb.enabled }}
+{{- $prefix := include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}
+---
+# Pipe State DB (ADR 0005): the Course's SECOND CNPG Cluster, logically and
+# physically separate from the Open WebUI DB. Holds Pipe Session state
+# (transcripts, progress) written by the FIxbot Pipe code running inside Open
+# WebUI via FIXBOT_STATE_DB_URL. Single instance by design (row appends keyed
+# by distinct chat_id do not contend); storageClass is a disruptive, one-way
+# choice on a live Course (CNPG storage is immutable).
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ $prefix }}-state-db
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  instances: {{ $config.stateDb.instances }}
+
+  affinity:
+    podAntiAffinityType: {{ $.Values.postgres.podAntiAffinityType | default "preferred" }}
+
+  imageName: {{ $config.stateDb.imageName | quote }}
+
+  primaryUpdateStrategy: unsupervised
+
+  postgresql:
+    parameters:
+      max_connections: {{ $config.stateDb.maxConnections | quote }}
+
+  metrics:
+    disableDefaultQueries: false
+
+  bootstrap:
+    initdb:
+      database: {{ $config.stateDb.database | quote }}
+      owner: {{ $config.stateDb.owner | quote }}
+      # Declare the Pipe Session schema once, with the chart (spec authority),
+      # so Pipes only ever do INSERT/UPDATE. Idempotent:
+      # postInitApplicationSQL runs only on cluster bootstrap.
+      postInitApplicationSQL:
+        - >-
+          CREATE TABLE IF NOT EXISTS pipe_sessions (
+            chat_id TEXT PRIMARY KEY,
+            email TEXT,
+            pipe_id TEXT,
+            qkb_commit TEXT,
+            pipe_base_commit TEXT,
+            sys_prompt_commit TEXT,
+            mapping_commit TEXT,
+            transcript TEXT,
+            question_index INTEGER,
+            created_at TIMESTAMP DEFAULT now(),
+            submitted BOOLEAN
+          );
+        # Consent records (research-study opt-in): one row per user email,
+        # response accepted|declined, body = the consent text shown. Written
+        # by the consent Event function (future work); the chart
+        # declares the schema so code only ever INSERTs. Mirrors the live
+        # test-state-DB table exactly.
+        - >-
+          CREATE TABLE IF NOT EXISTS user_agreement (
+            email TEXT PRIMARY KEY,
+            response TEXT NOT NULL CHECK (response IN ('accepted', 'declined')),
+            body TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT now()
+          );
+        # Per-Course user allowlist (institutional user identifiers).
+        # Rows are managed by Pipe tooling (INSERTs), read by Pipes; the chart
+        # only declares the schema, like pipe_sessions/user_agreement. NOTE:
+        # postInitApplicationSQL runs ONLY at cluster bootstrap — when adding
+        # a table to a LIVE cluster, apply the same CREATE TABLE by hand (see
+        # internal runbook -> Pipe State DB schema) or reset the Course state DB.
+        - >-
+          CREATE TABLE IF NOT EXISTS user_whitelist (
+            uco INTEGER PRIMARY KEY
+          );
+        # The bootstrap SQL runs as the postgres superuser; hand the tables to
+        # the app owner so the FIXBOT_STATE_DB_URL credentials can write.
+        - {{ printf "ALTER TABLE pipe_sessions OWNER TO %s;" ($config.stateDb.owner) | quote }}
+        - {{ printf "ALTER TABLE user_agreement OWNER TO %s;" ($config.stateDb.owner) | quote }}
+        - {{ printf "ALTER TABLE user_whitelist OWNER TO %s;" ($config.stateDb.owner) | quote }}
+
+  storage:
+    size: {{ $config.stateDb.storageSize | quote }}
+    storageClass: {{ $config.stateDb.storageClass | quote }}
+
+  resources:
+    requests:
+      memory: {{ $config.stateDb.resources.requests.memory | quote }}
+      cpu: {{ $config.stateDb.resources.requests.cpu }}
+    limits:
+      memory: {{ $config.stateDb.resources.limits.memory | quote }}
+      cpu: {{ $config.stateDb.resources.limits.cpu }}
+
+  {{- if $config.stateDb.backup.enabled }}
+  # Backups use the Barman Cloud Plugin against the DEDICATED state-bucket
+  # ObjectStore (state-db-backup.yaml), not the Open WebUI DB's store.
+  plugins:
+    - name: {{ $.Values.backup.pluginName }}
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: {{ $prefix }}-state-backup-store
+  {{- end }}
+{{- end }}
+{{- end }}

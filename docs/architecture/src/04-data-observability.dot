@@ -1,0 +1,94 @@
+digraph data_observability {
+  graph [
+    rankdir=LR,
+    newrank=true,
+    compound=true,
+    splines=spline,
+    nodesep=0.45,
+    ranksep=0.7,
+    pad=0.35,
+    bgcolor="#FFFFFF",
+    fontname="Noto Sans",
+    fontsize=22,
+    labelloc="t",
+    label="Data protection and observability\n(backups, interim safety net, metrics and logs)",
+    fontcolor="#1F2933"
+  ]
+
+  node [
+    fontname="Noto Sans",
+    fontsize=11,
+    shape=box,
+    style="rounded,filled",
+    color="#4A78B5",
+    fillcolor="#EAF2FB",
+    penwidth=1.4,
+    margin="0.14,0.08"
+  ]
+
+  edge [
+    fontname="Noto Sans",
+    fontsize=9,
+    color="#5B6770",
+    fontcolor="#5B6770",
+    penwidth=1.3,
+    arrowsize=0.7
+  ]
+
+  subgraph cluster_data {
+    label="Database backups";
+    fontsize=13;
+    fontcolor="#B5485D";
+    style="rounded";
+    color="#B5485D";
+    margin=14;
+
+    owuidb [label="Open WebUI DB\nCNPG Postgres", shape=cylinder, fillcolor="#F3EAFB", color="#7B4FA6"];
+    statedb [label="Pipe State DB\nCNPG Postgres", shape=cylinder, fillcolor="#F3EAFB", color="#7B4FA6"];
+    barman [label="Barman Cloud Plugin\ncontinuous WAL + weekly full\n(backup.enabled = true)"];
+    pgbucket [label="s3://example-fixbot-pg-backups/<slug>\nOpen WebUI DB archive", shape=cylinder, fillcolor="#FDECEF", color="#B5485D"];
+    statebucket [label="s3://example-fixbot-state-backups/<slug>\nPipe State DB archive\n(semester-end retention)", shape=cylinder, fillcolor="#FDECEF", color="#B5485D"];
+
+    dumpjob [label="Interim pg_dump CronJob\ndaily 03:15 UTC\nown NetworkPolicy exception", fillcolor="#FDECEF", color="#B5485D"];
+    dumppvc [label="nfs-csi-backup PVC\n14-day retention\n(db-dump safety net)", shape=cylinder, fillcolor="#FDECEF", color="#B5485D"];
+  }
+
+  subgraph cluster_obs {
+    label="Self-hosted monitoring";
+    fontsize=13;
+    fontcolor="#4A78B5";
+    style="rounded";
+    color="#4A78B5";
+    margin=14;
+
+    workloads [label="Pods and Services\nwebui / site / DBs / Jobs", fillcolor="#E8F5EC", color="#3E8E5A"];
+    prometheus [label="Prometheus\nscrapes app + platform metrics"];
+    clusterprom [label="cluster-prometheus\ncluster Prometheus\n(read-only datasource)", fillcolor="#FDECEF", color="#B5485D"];
+    grafana [label="Grafana\nmonitoring.<domain>\nOIDC login", fillcolor="#EAF2FB", color="#4A78B5"];
+
+    promtail [label="promtail + logsink\npod logs", fillcolor="#EAF2FB", color="#4A78B5"];
+    loki [label="Loki\n30-day compactor retention"];
+    lokistore [label="Interim: filesystem PVC\nTarget: s3://example-fixbot-loki", shape=cylinder, fillcolor="#FDECEF", color="#B5485D"];
+  }
+
+
+  owuidb  -> barman [label="WAL + base"];
+  statedb -> barman [label="WAL + base"];
+  barman  -> pgbucket    [label="Open WebUI DB"];
+  barman  -> statebucket [label="Pipe State DB"];
+
+  dumpjob -> owuidb  [label="pg_dump -Fc", style=dotted];
+  dumpjob -> statedb [label="pg_dump -Fc", style=dotted];
+  dumpjob -> dumppvc [label="writes"];
+
+  workloads -> prometheus [label="metrics"];
+  workloads -> promtail   [label="stdout logs"];
+  prometheus -> grafana   [label="datasource"];
+  clusterprom -> grafana  [label="infra + node metrics", style=dashed];
+  promtail -> loki        [label="push logs"];
+  loki -> lokistore       [label="chunks", style=dashed];
+  loki -> grafana         [label="logs datasource"];
+
+  retention [shape=note, label="Backup semantics\n- CNPG backups are the primary recovery path.\n- Interim dump exists only while the S3 store is degraded.\n- Removing a Course stops pruning: the last State DB backup persists (semester-end archive).", fillcolor="#FFF4E5", color="#E8A33D", fontsize=10];
+  retention -> dumppvc [style=invis];
+}

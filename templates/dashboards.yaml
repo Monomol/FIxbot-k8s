@@ -1,0 +1,243 @@
+{{- if .Values.dashboards.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fixbot.fullname" . }}-dashboard
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" . | nindent 4 }}
+    grafana_dashboard: "1"
+data:
+  fixbot.json: |
+    {
+      "annotations": { "list": [{ "builtIn": 1, "datasource": { "type": "grafana", "uid": "-- Grafana --" }, "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard" }] },
+      "editable": true,
+      "graphTooltip": 1,
+      "links": [],
+      "panels": [
+        {
+          "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }, "id": 100, "panels": [], "title": "SLO / Availability", "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [{ "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "OK", "color": "green" } } }], "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] } }, "overrides": [] },
+          "gridPos": { "h": 6, "w": 6, "x": 0, "y": 1 },
+          "id": 1,
+          "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+          "targets": [{ "expr": "max(fixbot_health{course=\"$course\"})", "legendFormat": "health", "refId": "A" }],
+          "title": "Health (/health probe)",
+          "type": "stat"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] } } },
+          "gridPos": { "h": 6, "w": 6, "x": 6, "y": 1 },
+          "id": 2,
+          "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+          "targets": [{ "expr": "max(fixbot_ready_replicas{course=\"$course\"})", "legendFormat": "ready", "refId": "A" }],
+          "title": "WebUI replicas ready",
+          "type": "stat"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] } } },
+          "gridPos": { "h": 6, "w": 6, "x": 12, "y": 1 },
+          "id": 3,
+          "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+          "targets": [{ "expr": "max(fixbot_db_ready{course=\"$course\"}) / clamp_min(max(fixbot_db_instances{course=\"$course\"}),1)", "legendFormat": "ready/configured", "refId": "A" }],
+          "title": "DB instances ready (ready/configured)",
+          "type": "stat"
+        },
+        {
+          "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 }, "id": 200, "panels": [], "title": "PostgreSQL (CNPG postgres_exporter)", "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }, "overrides": [] },
+          "gridPos": { "h": 7, "w": 12, "x": 0, "y": 8 },
+          "id": 11,
+          "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+          "targets": [{ "expr": "sum by (instance) (cnpg_backends_total{course=\"$course\",datname=\"fixbot\"})", "legendFormat": "{{ `{{instance}}` }}", "refId": "A" }],
+          "title": "DB active connections (per instance)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "percent", "min": 0, "max": 100 }, "overrides": [] },
+          "gridPos": { "h": 7, "w": 12, "x": 12, "y": 8 },
+          "id": 12,
+          "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+          "targets": [{ "expr": "sum by (instance) (rate(cnpg_pg_stat_database_blks_hit{course=\"$course\",datname=\"fixbot\"}[5m])) / (sum by (instance) (rate(cnpg_pg_stat_database_blks_hit{course=\"$course\",datname=\"fixbot\"}[5m])) + sum by (instance) (rate(cnpg_pg_stat_database_blks_read{course=\"$course\",datname=\"fixbot\"}[5m])))", "legendFormat": "{{ `{{instance}}` }}", "refId": "A" }],
+          "title": "Cache hit ratio",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "bytes" }, "overrides": [] },
+          "gridPos": { "h": 7, "w": 12, "x": 0, "y": 15 },
+          "id": 13,
+          "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+          "targets": [{ "expr": "max(cnpg_pg_database_size_bytes{course=\"$course\",datname=\"fixbot\"})", "legendFormat": "size", "refId": "A" }],
+          "title": "Database size",
+          "type": "stat"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "unit": "short", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 1 }, { "color": "red", "value": 20 }] } }, "overrides": [] },
+          "gridPos": { "h": 7, "w": 12, "x": 12, "y": 15 },
+          "id": 14,
+          "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+          "targets": [{ "expr": "max(cnpg_collector_pg_wal_archive_status{course=\"$course\", value=\"ready\"})", "legendFormat": "WAL files waiting to archive", "refId": "A" }],
+          "title": "WAL archiving queue (RPO; 0 = healthy)",
+          "type": "stat"
+        },
+        {
+          "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 }, "id": 300, "panels": [], "title": "Backups (CNPG S3 + interim NFS dumps)", "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "unit": "s", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 2592000 }, { "color": "red", "value": 2592000 }] } }, "overrides": [] },
+          "gridPos": { "h": 6, "w": 12, "x": 0, "y": 23 },
+          "id": 21,
+          "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+          "targets": [{ "expr": "fixbot_last_backup_age_seconds{course=\"$course\"}", "legendFormat": "backup age", "refId": "A" }],
+          "title": "Last S3 backup age (SLO: <30d)",
+          "type": "stat"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "cluster-prometheus" },
+          "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "unit": "short", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } }, "overrides": [] },
+          "gridPos": { "h": 6, "w": 12, "x": 12, "y": 23 },
+          "id": 22,
+          "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+          "targets": [{ "expr": "sum(kube_job_status_failed{job_name=~\"fixbot-.*db-dump.*\"}) or vector(0)", "legendFormat": "failed dump jobs", "refId": "A" }],
+          "title": "Interim NFS dump — failed jobs (retained)",
+          "type": "stat"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "cluster-prometheus" },
+          "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "unit": "s", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 104400 }, { "color": "red", "value": 172800 }] } }, "overrides": [] },
+          "gridPos": { "h": 6, "w": 12, "x": 0, "y": 29 },
+          "id": 23,
+          "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+          "targets": [{ "expr": "time() - max(kube_job_status_completion_time{job_name=~\"fixbot-.*db-dump.*\"})", "legendFormat": "seconds since last successful dump", "refId": "A" }],
+          "title": "Interim NFS dump — age of last success (daily; red >48h)",
+          "type": "stat"
+        },
+        {
+          "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 }, "id": 500, "panels": [], "title": "Logs (Loki)", "type": "row"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "reqps" }, "overrides": [] },
+          "gridPos": { "h": 7, "w": 12, "x": 0, "y": 37 },
+          "id": 41,
+          "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+          "targets": [{ "expr": "sum(rate({job=\"fixbot-logs\", pod=~\"fixbot-$course-.*\"}[1m]))", "refId": "A" }],
+          "title": "Log volume (lines/s)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } }, "overrides": [] },
+          "gridPos": { "h": 7, "w": 12, "x": 12, "y": 37 },
+          "id": 42,
+          "options": { "showTime": true, "showCommonLabels": false, "wrapLogMessage": true, "prettifyLogMessage": false, "showLabels": false, "dedupStrategy": "none", "sortOrder": "Descending" },
+          "targets": [{ "expr": "{job=\"fixbot-logs\", pod=~\"fixbot-$course-.*\"}", "refId": "A" }],
+          "title": "Recent logs",
+          "type": "logs"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "style": "dark",
+      "tags": ["fixbot", "open-webui", "postgres", "monitoring"],
+      "templating": {
+        "list": [
+          {
+            "current": {},
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "definition": "label_values(fixbot_health, course)",
+            "hide": 0,
+            "includeAll": false,
+            "label": "Course",
+            "multi": false,
+            "name": "course",
+            "options": [],
+            "query": { "query": "label_values(fixbot_health, course)", "refId": "StandardVariableQuery" },
+            "refresh": 1,
+            "regex": "",
+            "sort": 1,
+            "type": "query"
+          }
+        ]
+      },
+      "time": { "from": "now-1h", "to": "now" },
+      "timepicker": {},
+      "timezone": "",
+      "title": "FIxbot — Course Overview",
+      "uid": "fixbot-course-overview",
+      "version": 1
+    }
+  infra.json: |
+    {
+      "annotations": { "list": [{ "builtIn": 1, "datasource": { "type": "grafana", "uid": "-- Grafana --" }, "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard" }] },
+      "editable": true,
+      "graphTooltip": 1,
+      "links": [],
+      "panels": [
+        { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }, "id": 100, "panels": [], "title": "Nodes", "type": "row" },
+        { "datasource": { "type": "prometheus", "uid": "cluster-prometheus" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "max": 100, "min": 0, "unit": "percent" }, "overrides": [] }, "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 }, "id": 1, "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }, "targets": [{ "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)", "legendFormat": "{{ `{{instance}}` }}", "refId": "A" }], "title": "Node CPU usage", "type": "timeseries" },
+        { "datasource": { "type": "prometheus", "uid": "cluster-prometheus" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "max": 100, "min": 0, "unit": "percent" }, "overrides": [] }, "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 }, "id": 2, "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }, "targets": [{ "expr": "100 - ((node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100)", "legendFormat": "{{ `{{instance}}` }}", "refId": "A" }], "title": "Node memory usage", "type": "timeseries" },
+        { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 }, "id": 200, "panels": [], "title": "FIxbot namespace ({{ .Values.namespace }})", "type": "row" },
+        { "datasource": { "type": "prometheus", "uid": "cluster-prometheus" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }, "overrides": [] }, "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 }, "id": 3, "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }, "targets": [{ "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"{{ .Values.namespace }}\", container!=\"\"}[5m]))", "legendFormat": "{{ `{{pod}}` }}", "refId": "A" }], "title": "Pod CPU usage (cores)", "type": "timeseries" },
+        { "datasource": { "type": "prometheus", "uid": "cluster-prometheus" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "decbytes" }, "overrides": [] }, "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 }, "id": 4, "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }, "targets": [{ "expr": "sum by (pod) (container_memory_usage_bytes{namespace=\"{{ .Values.namespace }}\", container!=\"\"})", "legendFormat": "{{ `{{pod}}` }}", "refId": "A" }], "title": "Pod memory usage", "type": "timeseries" },
+        { "datasource": { "type": "prometheus", "uid": "cluster-prometheus" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }, "overrides": [] }, "gridPos": { "h": 8, "w": 24, "x": 0, "y": 18 }, "id": 5, "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }, "targets": [{ "expr": "sum by (namespace) (kube_pod_container_status_restarts_total{namespace=\"{{ .Values.namespace }}\"})", "legendFormat": "{{ `{{namespace}}` }}", "refId": "A" }], "title": "Pod restarts ({{ .Values.namespace }})", "type": "timeseries" }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "style": "dark",
+      "tags": ["fixbot", "infra", "monitoring"],
+      "templating": { "list": [] },
+      "time": { "from": "now-1h", "to": "now" },
+      "timepicker": {},
+      "timezone": "",
+      "title": "FIxbot — Infrastructure",
+      "uid": "fixbot-infra",
+      "version": 1
+    }
+  resources.json: |
+    {
+      "annotations": { "list": [{ "builtIn": 1, "datasource": { "type": "grafana", "uid": "-- Grafana --" }, "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard" }] },
+      "description": "Actual memory working-set vs declared pod limits, per component group. Use to right-size chart resource limits (the namespace quota counts LIMITS, not usage). Data: cluster Prometheus (cAdvisor working_set + kube-state-metrics limits).",
+      "editable": true,
+      "graphTooltip": 1,
+      "links": [],
+      "panels": [
+        { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }, "id": 100, "panels": [], "title": "WebUI + Open WebUI DBs", "type": "row" },
+        { "datasource": { "type": "prometheus", "uid": "cluster-prometheus" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "decbytes" }, "overrides": [{ "matcher": { "id": "byRegexp", "options": "limit .*" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }, { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }, { "id": "custom.fillOpacity", "value": 0 }] }] }, "gridPos": { "h": 9, "w": 12, "x": 0, "y": 1 }, "id": 1, "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }, "targets": [{ "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"{{ .Values.namespace }}\", container=\"open-webui\"})", "legendFormat": "{{ `{{pod}}` }}", "refId": "A" }, { "expr": "sum by (pod) (kube_pod_container_resource_limits{namespace=\"{{ .Values.namespace }}\", resource=\"memory\", container=\"open-webui\"})", "legendFormat": "{{ `limit {{pod}}` }}", "refId": "B" }], "title": "WebUI pods (open-webui container)", "type": "timeseries" },
+        { "datasource": { "type": "prometheus", "uid": "cluster-prometheus" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "decbytes" }, "overrides": [{ "matcher": { "id": "byRegexp", "options": "limit .*" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }, { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }, { "id": "custom.fillOpacity", "value": 0 }] }] }, "gridPos": { "h": 9, "w": 12, "x": 12, "y": 1 }, "id": 2, "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }, "targets": [{ "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"{{ .Values.namespace }}\", container=\"postgres\", pod=~\"fixbot-[a-z0-9]+-db-[0-9]+\"})", "legendFormat": "{{ `{{pod}}` }}", "refId": "A" }, { "expr": "sum by (pod) (kube_pod_container_resource_limits{namespace=\"{{ .Values.namespace }}\", resource=\"memory\", container=\"postgres\", pod=~\"fixbot-[a-z0-9]+-db-[0-9]+\"})", "legendFormat": "{{ `limit {{pod}}` }}", "refId": "B" }], "title": "Open WebUI DBs (postgres)", "type": "timeseries" },
+        { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 10 }, "id": 200, "panels": [], "title": "Pipe State DBs + backup sidecars", "type": "row" },
+        { "datasource": { "type": "prometheus", "uid": "cluster-prometheus" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "decbytes" }, "overrides": [{ "matcher": { "id": "byRegexp", "options": "limit .*" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }, { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }, { "id": "custom.fillOpacity", "value": 0 }] }] }, "gridPos": { "h": 9, "w": 12, "x": 0, "y": 11 }, "id": 3, "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }, "targets": [{ "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"{{ .Values.namespace }}\", container=\"postgres\", pod=~\"fixbot-.*-state-db-[0-9]+\"})", "legendFormat": "{{ `{{pod}}` }}", "refId": "A" }, { "expr": "sum by (pod) (kube_pod_container_resource_limits{namespace=\"{{ .Values.namespace }}\", resource=\"memory\", container=\"postgres\", pod=~\"fixbot-.*-state-db-[0-9]+\"})", "legendFormat": "{{ `limit {{pod}}` }}", "refId": "B" }], "title": "Pipe State DBs (postgres; 384Mi limit)", "type": "timeseries" },
+        { "datasource": { "type": "prometheus", "uid": "cluster-prometheus" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "decbytes" }, "overrides": [{ "matcher": { "id": "byRegexp", "options": "limit .*" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }, { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }, { "id": "custom.fillOpacity", "value": 0 }] }] }, "gridPos": { "h": 9, "w": 12, "x": 12, "y": 11 }, "id": 4, "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }, "targets": [{ "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"{{ .Values.namespace }}\", container=\"plugin-barman-cloud\"})", "legendFormat": "{{ `{{pod}}` }}", "refId": "A" }, { "expr": "sum by (pod) (kube_pod_init_container_resource_limits{namespace=\"{{ .Values.namespace }}\", resource=\"memory\", container=\"plugin-barman-cloud\"})", "legendFormat": "{{ `limit {{pod}}` }}", "refId": "B" }], "title": "Barman backup sidecars (native sidecar on each DB pod; 384Mi configured limit)", "type": "timeseries" },
+        { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 20 }, "id": 300, "panels": [], "title": "Course aux + Pipe Control", "type": "row" },
+        { "datasource": { "type": "prometheus", "uid": "cluster-prometheus" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "decbytes" }, "overrides": [{ "matcher": { "id": "byRegexp", "options": "limit .*" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }, { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }, { "id": "custom.fillOpacity", "value": 0 }] }] }, "gridPos": { "h": 9, "w": 12, "x": 0, "y": 21 }, "id": 5, "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }, "targets": [{ "expr": "sum by (pod, container) (container_memory_working_set_bytes{namespace=\"{{ .Values.namespace }}\", container=~\"chroma|dragonfly\"})", "legendFormat": "{{ `{{pod}}` }}", "refId": "A" }, { "expr": "sum by (pod, container) (kube_pod_container_resource_limits{namespace=\"{{ .Values.namespace }}\", resource=\"memory\", container=~\"chroma|dragonfly\"})", "legendFormat": "{{ `limit {{pod}}` }}", "refId": "B" }], "title": "Chroma + Dragonfly (multi-replica Course prerequisites)", "type": "timeseries" },
+        { "datasource": { "type": "prometheus", "uid": "cluster-prometheus" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "decbytes" }, "overrides": [{ "matcher": { "id": "byRegexp", "options": "limit .*" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }, { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }, { "id": "custom.fillOpacity", "value": 0 }] }] }, "gridPos": { "h": 9, "w": 12, "x": 12, "y": 21 }, "id": 6, "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }, "targets": [{ "expr": "sum by (pod, container) (container_memory_working_set_bytes{namespace=\"{{ .Values.namespace }}\", pod=~\"fixbot-fixbot-pipe-control-.*\", container!=\"\"})", "legendFormat": "{{ `{{pod}} / {{container}}` }}", "refId": "A" }, { "expr": "sum by (pod, container) (kube_pod_container_resource_limits{namespace=\"{{ .Values.namespace }}\", resource=\"memory\", pod=~\"fixbot-fixbot-pipe-control-.*\"})", "legendFormat": "{{ `limit {{pod}} / {{container}}` }}", "refId": "B" }], "title": "Pipe Control pod (server + skeleton/prune loop)", "type": "timeseries" },
+        { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 30 }, "id": 400, "panels": [], "title": "Observability stack + namespace totals", "type": "row" },
+        { "datasource": { "type": "prometheus", "uid": "cluster-prometheus" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "decbytes" }, "overrides": [{ "matcher": { "id": "byRegexp", "options": "limit .*" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }, { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }, { "id": "custom.fillOpacity", "value": 0 }] }] }, "gridPos": { "h": 9, "w": 12, "x": 0, "y": 31 }, "id": 7, "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }, "targets": [{ "expr": "sum by (pod, container) (container_memory_working_set_bytes{namespace=\"{{ .Values.namespace }}\", pod=~\"fixbot-fixbot-(grafana|prometheus|loki|logsink|site)-.*\", container!=\"\"})", "legendFormat": "{{ `{{pod}} / {{container}}` }}", "refId": "A" }, { "expr": "sum by (pod, container) (kube_pod_container_resource_limits{namespace=\"{{ .Values.namespace }}\", resource=\"memory\", pod=~\"fixbot-fixbot-(grafana|prometheus|loki|logsink|site)-.*\")", "legendFormat": "{{ `limit {{pod}} / {{container}}` }}", "refId": "B" }], "title": "Grafana + Prometheus + Loki + logsink + status page", "type": "timeseries" },
+        { "datasource": { "type": "prometheus", "uid": "cluster-prometheus" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "decbytes" }, "overrides": [{ "matcher": { "id": "byRegexp", "options": "sum of limits.*" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }, { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }, { "id": "custom.fillOpacity", "value": 0 }] }] }, "gridPos": { "h": 9, "w": 12, "x": 12, "y": 31 }, "id": 8, "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }, "targets": [{ "expr": "sum(container_memory_working_set_bytes{namespace=\"{{ .Values.namespace }}\", container!=\"\"})", "legendFormat": "actual usage (whole {{ .Values.namespace }})", "refId": "A" }, { "expr": "sum(kube_pod_container_resource_limits{namespace=\"{{ .Values.namespace }}\", resource=\"memory\"})", "legendFormat": "sum of limits", "refId": "B" }], "title": "Namespace total: actual usage vs reserved limits", "type": "timeseries" }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "style": "dark",
+      "tags": ["fixbot", "resources", "sizing", "monitoring"],
+      "templating": { "list": [] },
+      "time": { "from": "now-6h", "to": "now" },
+      "timepicker": {},
+      "timezone": "",
+      "title": "FIxbot — Resource Sizing (usage vs limits)",
+      "uid": "fixbot-resource-sizing",
+      "version": 1
+    }
+{{- end }}

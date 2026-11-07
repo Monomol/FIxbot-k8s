@@ -1,0 +1,93 @@
+digraph course_stack {
+  graph [
+    rankdir=LR,
+    newrank=true,
+    compound=true,
+    splines=spline,
+    nodesep=0.5,
+    ranksep=0.8,
+    pad=0.35,
+    bgcolor="#FFFFFF",
+    fontname="Noto Sans",
+    fontsize=22,
+    labelloc="t",
+    label="Per-Course stack\n(every Course gets this isolated set of resources)",
+    fontcolor="#1F2933"
+  ]
+
+  node [
+    fontname="Noto Sans",
+    fontsize=11,
+    shape=box,
+    style="rounded,filled",
+    color="#4A78B5",
+    fillcolor="#EAF2FB",
+    penwidth=1.4,
+    margin="0.14,0.08"
+  ]
+
+  edge [
+    fontname="Noto Sans",
+    fontsize=9,
+    color="#5B6770",
+    fontcolor="#5B6770",
+    penwidth=1.3,
+    arrowsize=0.7
+  ]
+
+  browser [label="Student / Teacher\nbrowser", fillcolor="#F2F2F2", color="#777777"];
+  ingress [label="Ingress + TLS\n<slug>.fixbot.example.com", fillcolor="#FFF4E5", color="#E8A33D"];
+
+  subgraph cluster_course {
+    label="Course <slug>  (resource prefix: fixbot-<slug>-*)";
+    fontsize=13;
+    fontcolor="#3E8E5A";
+    style="rounded";
+    color="#3E8E5A";
+    margin=16;
+
+    webui [label="Open WebUI\nreplicas: 1 = Deployment\nreplicas > 1 = StatefulSet\n(Pipes, chats, knowledge)", fillcolor="#E8F5EC", color="#3E8E5A"];
+    redis [label="Dragonfly / Redis\nsessions + websockets", style="rounded,filled,dashed", fillcolor="#E8F5EC", color="#3E8E5A"];
+    chroma [label="Chroma\nvector store", style="rounded,filled,dashed", fillcolor="#E8F5EC", color="#3E8E5A"];
+    contentpvc [label="Shared content PVC\nmounted read-only via subPath", shape=cylinder, fillcolor="#F3EAFB", color="#7B4FA6"];
+
+    owuidb [label="Open WebUI DB\nCNPG Postgres\nusers / chats / settings\nNetworkPolicy: ingress-only\n(webui, operator, db-dump, prometheus)", shape=cylinder, fillcolor="#F3EAFB", color="#7B4FA6"];
+    statedb [label="Pipe State DB\nCNPG Postgres\nPipe Sessions / valves\nNetworkPolicy: ingress-only\n(webui, operator, db-dump, prometheus)", shape=cylinder, fillcolor="#F3EAFB", color="#7B4FA6"];
+    data [label="Course data PVC\nuploads / cache", shape=cylinder, fillcolor="#F3EAFB", color="#7B4FA6"];
+
+    provision [label="Provisioning Job\n(post-install / post-upgrade)\nadmins + model settings", style="rounded,filled,dashed", fillcolor="#FFFFFF", color="#4A78B5"];
+
+  }
+
+  oidc [label="OIDC\n(SSO only)", fillcolor="#FDECEF", color="#B5485D"];
+  aiass [label="AIaaS LLM API\n(singular key or key pool)", fillcolor="#FDECEF", color="#B5485D"];
+
+  pgbackup [label="s3://example-fixbot-pg-backups/<slug>\nbarman: WAL + weekly full", shape=cylinder, fillcolor="#FDECEF", color="#B5485D"];
+  statebackup [label="s3://example-fixbot-state-backups/<slug>\nbarman: WAL + weekly full", shape=cylinder, fillcolor="#FDECEF", color="#B5485D"];
+  dump [label="Interim pg_dump CronJob\ndaily 03:15 UTC, 14 d\nnfs-csi-backup PVC", fillcolor="#FDECEF", color="#B5485D"];
+
+  { rank=same; browser; ingress; }
+  { rank=same; webui; redis; chroma; provision; }
+  { rank=same; owuidb; statedb; data; }
+  { rank=same; pgbackup; statebackup; dump; }
+
+  browser -> ingress [label="HTTPS"];
+  ingress -> webui   [label="host route"];
+
+  webui -> oidc  [label="login"];
+  webui -> aiass [label="chat completion"];
+
+  webui -> redis   [label="replicas > 1", style=dashed];
+  webui -> chroma  [label="replicas > 1", style=dashed];
+  webui -> owuidb  [label="SQL"];
+  webui -> statedb [label="SQL (Pipe state)"];
+  webui -> data    [label="files"];
+  webui -> contentpvc [label="subPath mount", style=dashed];
+
+  provision -> webui [label="reconcile", style=dotted];
+
+  owuidb  -> pgbackup    [label="barman", style=dashed];
+  statedb -> statebackup [label="barman", style=dashed];
+  dump -> owuidb  [label="pg_dump", style=dotted];
+  dump -> statedb [label="pg_dump", style=dotted];
+}

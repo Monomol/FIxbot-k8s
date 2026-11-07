@@ -1,0 +1,135 @@
+digraph surfaces {
+  graph [
+    rankdir=LR,
+    newrank=true,
+    compound=true,
+    splines=spline,
+    nodesep=0.4,
+    ranksep=0.75,
+    pad=0.35,
+    bgcolor="#FFFFFF",
+    fontname="Noto Sans",
+    fontsize=22,
+    labelloc="t",
+    label="Build, credential and ownership surfaces\n(what feeds the running cluster; secret names only, never values)",
+    fontcolor="#1F2933"
+  ]
+
+  node [
+    fontname="Noto Sans",
+    fontsize=11,
+    shape=box,
+    style="rounded,filled",
+    color="#4A78B5",
+    fillcolor="#EAF2FB",
+    penwidth=1.4,
+    margin="0.14,0.08"
+  ]
+
+  edge [
+    fontname="Noto Sans",
+    fontsize=9,
+    color="#5B6770",
+    fontcolor="#5B6770",
+    penwidth=1.3,
+    arrowsize=0.7
+  ]
+
+  subgraph cluster_build {
+    label="Build and content surfaces (GitLab)";
+    fontsize=13;
+    fontcolor="#B7950B";
+    style="rounded";
+    color="#B7950B";
+    margin=12;
+
+    content [label="Content repos\nQKB / sys-prompts / pipe-bases", fillcolor="#FFF9DB", color="#B7950B"];
+    qschema [label="qkb-schema", fillcolor="#FFF9DB", color="#B7950B"];
+    cci     [label="fixbot-content-ci\nshared pipeline", fillcolor="#FFF9DB", color="#B7950B"];
+    pcimg   [label="pipe_control image\n:latest / :sha", fillcolor="#FFF9DB", color="#B7950B"];
+    siteimg [label="site image\n:latest / :sha", fillcolor="#FFF9DB", color="#B7950B"];
+  }
+
+  subgraph cluster_portals {
+    label="external portals";
+    fontsize=13;
+    fontcolor="#B5485D";
+    style="rounded";
+    color="#B5485D";
+    margin=12;
+
+    the IdP    [label="id.example.com\nOIDC client", fillcolor="#FDECEF", color="#B5485D"];
+    aiass    [label="AIaaS portal\nLLM API keys", fillcolor="#FDECEF", color="#B5485D"];
+    gate     [label="s3.example.com\nS3 identities + policies", fillcolor="#FDECEF", color="#B5485D"];
+    gitlabbot[label="GitLab bot + access tokens\napi / read-only / pull", fillcolor="#FDECEF", color="#B5485D"];
+    pbloky   [label="pbloky integration\nper-Course key", fillcolor="#FDECEF", color="#B5485D"];
+  }
+
+  subgraph cluster_secrets {
+    label="Kubernetes Secrets (pre-created, referenced by name)";
+    fontsize=13;
+    fontcolor="#7B4FA6";
+    style="rounded";
+    color="#7B4FA6";
+    margin=12;
+
+    oidcsec    [label="fixbot-oidc-secret\nfixbot-grafana-oidc-secret", shape=note, fillcolor="#F3EAFB", color="#7B4FA6"];
+    aiasssec   [label="<slug>-aiass-key\n(api-key or api-keys pool)", shape=note, fillcolor="#F3EAFB", color="#7B4FA6"];
+    s3sec      [label="fixbot-s3-creds\nfixbot-state-s3-creds\nfixbot-loki-s3-creds", shape=note, fillcolor="#F3EAFB", color="#7B4FA6"];
+    gitlabsec  [label="fixbot-gitlab-token\nfixbot-gitlab-readonly\nfixbot-registry-pull", shape=note, fillcolor="#F3EAFB", color="#7B4FA6"];
+    syncsec    [label="fixbot-pipe-control-token", shape=note, fillcolor="#F3EAFB", color="#7B4FA6"];
+    pblokysec  [label="<slug>-pbloky-key", shape=note, fillcolor="#F3EAFB", color="#7B4FA6"];
+  }
+
+  subgraph cluster_runtime {
+    label="Runtime consumers (fixbot)";
+    fontsize=13;
+    fontcolor="#3E8E5A";
+    style="rounded";
+    color="#3E8E5A";
+    margin=12;
+
+    webui     [label="Open WebUI\nDeployment / StatefulSet", fillcolor="#E8F5EC", color="#3E8E5A"];
+    provision [label="Provisioning Job", fillcolor="#E8F5EC", color="#3E8E5A"];
+    pipecontrol [label="Pipe Control", fillcolor="#E8F5EC", color="#3E8E5A"];
+    propagate [label="Propagate Job", fillcolor="#E8F5EC", color="#3E8E5A"];
+    site      [label="Public site", fillcolor="#E8F5EC", color="#3E8E5A"];
+    databases [label="Open WebUI DB + Pipe State DB\nCNPG clusters", shape=cylinder, fillcolor="#F3EAFB", color="#7B4FA6"];
+    monitoring [label="Grafana + Loki", fillcolor="#E8F5EC", color="#3E8E5A"];
+  }
+
+  content -> cci [label="push"];
+  qschema -> cci [label="lint rules"];
+  cci -> pcimg [label="build (main)"];
+  cci -> siteimg [label="build (main)"];
+  cci -> pipecontrol [label="/sync?wait=1", style=dotted];
+
+  pcimg -> pipecontrol [label="image pull"];
+  pcimg -> propagate   [label="image pull"];
+  siteimg -> site      [label="image pull"];
+
+  the IdP -> oidcsec [label="client id/secret"];
+  aiass -> aiasssec [label="API key(s)"];
+  gate -> s3sec [label="identities"];
+  gitlabbot -> gitlabsec [label="tokens"];
+  pbloky -> pblokysec [label="per-Course key"];
+
+  oidcsec -> webui [label="SSO"];
+  oidcsec -> monitoring [label="Grafana login"];
+  aiasssec -> webui [label="LLM calls"];
+  s3sec -> databases [label="barman"];
+  s3sec -> monitoring [label="Loki chunks"];
+  gitlabsec -> provision [label="repo provisioning"];
+  gitlabsec -> propagate [label="read-only clone"];
+  gitlabsec -> site [label="registry pull secret"];
+  syncsec -> pipecontrol [label="Bearer auth on /sync"];
+  pblokysec -> webui [label="FIXBOT_PBLOKY_KEY"];
+
+  note [shape=note, label="No secret values live in the chart.\nSecrets are referenced by name only.", fillcolor="#FFF4E5", color="#E8A33D", fontsize=10];
+  note -> oidcsec [style=invis];
+
+  { rank=same; content; qschema; cci; pcimg; siteimg; }
+  { rank=same; the IdP; aiass; gate; gitlabbot; pbloky; }
+  { rank=same; oidcsec; aiasssec; s3sec; gitlabsec; syncsec; pblokysec; }
+  { rank=same; webui; provision; pipecontrol; propagate; site; databases; monitoring; }
+}

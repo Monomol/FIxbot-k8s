@@ -1,0 +1,40 @@
+{{- range $slug, $course := .Values.courses }}
+{{- $config := (include "fixbot.courseConfig" (dict "root" $ "slug" $slug "course" $course)) | fromYaml }}
+{{- if and $config.backup $config.backup.enabled }}
+# Barman Cloud Plugin ObjectStore (ADR 0004). Mirrors the in-tree
+# barmanObjectStore config, but retention + the AWS_* compatibility workarounds move
+# here (the plugin runs barman in a sidecar, so the env must be on the sidecar,
+# not the postgres container). The `serverName` stays empty — it is derived per
+# Cluster from the plugin's barmanObjectName parameter (defaults to cluster
+# name), keeping the same s3://.../<cluster>/ layout for base/ and wals/.
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: {{ include "fixbot.coursePrefix" (dict "Release" $.Release "slug" $slug) }}-backup-store
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "fixbot.labels" $ | nindent 4 }}
+    {{- include "fixbot.courseLabels" (dict "slug" $slug) | nindent 4 }}
+spec:
+  configuration:
+    destinationPath: {{ printf "%s/%s" $.Values.backup.destinationPath $slug | quote }}
+    endpointURL: {{ $.Values.backup.endpointURL | quote }}
+    s3Credentials:
+      accessKeyId:
+        name: {{ $.Values.backup.s3CredentialsSecretName }}
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: {{ $.Values.backup.s3CredentialsSecretName }}
+        key: ACCESS_SECRET_KEY
+  retentionPolicy: {{ $.Values.backup.retentionPolicy | quote }}
+  instanceSidecarConfiguration:
+    env:
+    {{- range $.Values.backup.env }}
+      - name: {{ .name }}
+        value: {{ .value | quote }}
+    {{- end }}
+    resources:
+      {{- toYaml $.Values.backup.sidecarResources | nindent 6 }}
+{{- end }}
+{{- end }}
